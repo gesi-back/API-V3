@@ -1,0 +1,56 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>API_con_Core_V3</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.14" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.12" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="7.1.1" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+    <PackageReference Include="System.Configuration.ConfigurationManager" Version="10.0.0" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.14" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\GESI.CORE.API.BLL.V3\GESI.CORE.API.BLL.V3.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="GESI.CORE.V3.BLL">
+      <HintPath>I:\Desarrollo\VersCom.Net\DLL Core V3\GESI.CORE.V3.BLL.dll</HintPath>
+    </Reference>
+    <Reference Include="GESI.CORE.V3.BO">
+      <HintPath>I:\Desarrollo\VersCom.Net\DLL Core V3\GESI.CORE.V3.BO.dll</HintPath>
+    </Reference>
+    <Reference Include="GESI.CORE.V3.DAL">
+      <HintPath>I:\Desarrollo\VersCom.Net\DLL Core V3\GESI.CORE.V3.DAL.dll</HintPath>
+    </Reference>
+    <Reference Include="GESI.CORE.V3.Test.Consola">
+      <HintPath>I:\Desarrollo\VersCom.Net\DLL Core V3\GESI.CORE.V3.Test.Consola.dll</HintPath>
+    </Reference>
+    <Reference Include="GESI.ERP.Compras.V3.BLL">
+      <HintPath>I:\Desarrollo\VersCom.Net\DLL Core V3\GESI.ERP.Compras.V3.BLL.dll</HintPath>
+    </Reference>
+    <Reference Include="GESI.ERP.Compras.V3.Exports">
+      <HintPath>I:\Desarrollo\VersCom.Net\DLL Core V3\GESI.ERP.Compras.V3.Exports.dll</HintPath>
+    </Reference>
+    <Reference Include="GESI.ERP.Core.V3.BLL">
+      <HintPath>I:\Desarrollo\VersCom.Net\DLL Core V3\GESI.ERP.Core.V3.BLL.dll</HintPath>
+    </Reference>
+    <Reference Include="GESI.ERP.Core.V3.BO">
+      <HintPath>I:\Desarrollo\VersCom.Net\DLL Core V3\GESI.ERP.Core.V3.BO.dll</HintPath>
+    </Reference>
+    <Reference Include="GESI.ERP.Core.V3.DAL">
+      <HintPath>I:\Desarrollo\VersCom.Net\DLL Core V3\GESI.ERP.Core.V3.DAL.dll</HintPath>
+    </Reference>
+    <Reference Include="GESI.ERP.Ventas.V3.BLL">
+      <HintPath>I:\Desarrollo\VersCom.Net\DLL Core V3\GESI.ERP.Ventas.V3.BLL.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>

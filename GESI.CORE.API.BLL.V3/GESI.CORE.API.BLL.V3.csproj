@@ -1,0 +1,37 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="7.1.1" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.14" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.14" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.14" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.14" />
+    <PackageReference Include="System.Security.Cryptography.Pkcs" Version="10.0.14" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\GESI.CORE.API.BO.V3\GESI.CORE.API.BO.V3.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="GESI.CORE.V3.BLL">
+      <HintPath>I:\Desarrollo\VersCom.Net\DLL Core V3\GESI.CORE.V3.BLL.dll</HintPath>
+    </Reference>
+    <Reference Include="GESI.CORE.V3.BO">
+      <HintPath>I:\Desarrollo\VersCom.Net\DLL Core V3\GESI.CORE.V3.BO.dll</HintPath>
+    </Reference>
+    <Reference Include="GESI.ERP.Core.V3.BLL">
+      <HintPath>I:\Desarrollo\VersCom.Net\DLL Core V3\GESI.ERP.Core.V3.BLL.dll</HintPath>
+    </Reference>
+    <Reference Include="GESI.ERP.Core.V3.BO">
+      <HintPath>I:\Desarrollo\VersCom.Net\DLL Core V3\GESI.ERP.Core.V3.BO.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>
