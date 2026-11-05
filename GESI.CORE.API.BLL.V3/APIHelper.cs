@@ -29,6 +29,8 @@ namespace GESI.CORE.API.BLL.V3
         string DevolverCodigosSeparadosPorComa(List<string>? lstCodigos,
                                                             int pageNumber,
                                                             int pageSize);
+
+        cError GenerarMensajePersonalizadoPorErrorExcepcion(Exception ex);
     }
 
     internal sealed class APIHelper(IApiLogger APILogger,IEmpresasBLL EmpresasBLL): IAPIHelper
@@ -101,7 +103,7 @@ namespace GESI.CORE.API.BLL.V3
         /// </summary>
         /// <param name="ex"></param>
         /// <returns></returns>
-        public static cError GenerarMensajePersonalizadoPorErrorExcepcion(Exception ex)
+        public cError GenerarMensajePersonalizadoPorErrorExcepcion(Exception ex)
         {
             cError oNuevoError = new cError();
 
@@ -592,5 +594,18 @@ namespace GESI.CORE.API.BLL.V3
             public static string GetList => $"{Path}/GetList";
             public static string GetComprobantesNoAsignados => $"{Path}/GetComprobantesNoAsignados";
         }
+    }
+
+    public static class ConfigItemsProductos
+    {
+        public static readonly List<string> Preferencias = new()
+    {
+        "Descripción Rubro (plural)",
+        "Descripción Rubro (singular)",
+        "DescripcionFiltro1Plural",
+        "DescripcionFiltro1Singular",
+        "DescripcionFiltro2Plural",
+        "DescripcionFiltro2Singular"
+    };
     }
 }

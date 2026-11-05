@@ -1,11 +1,16 @@
 ﻿using GESI.CORE.API.BO.V3;
+using GESI.CORE.V3.BLL;
+using GESI.CORE.V3.BO;
 using GESI.ERP.Core.V3.BLL;
 using GESI.ERP.Core.V3.BO;
+using GESI.ERP.Core.V3.BO.Dinamicos;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Net;
 using System.Text;
 
 namespace GESI.CORE.API.BLL.V3
@@ -48,6 +53,57 @@ namespace GESI.CORE.API.BLL.V3
                                                                             string incluirLotesDelProducto = "N",
                                                                             string codigos = "",
                                                                             string? estado = null);
+
+        cResponseProductos GetSearchResults(string expresion = "",
+                                                                                    int pageNumber = (int)pPaginacionValoresPredeterminados.pPageNumber,
+                                                                                    int pageSize = (int)pPaginacionValoresPredeterminados.pPageSize,
+                                                                                    string costos = "N",
+                                                                                    string categoriasafiltrar = "",
+                                                                                    string imagenes = "N",
+                                                                                    string stock = "N",
+                                                                                    string publicaecommerce = "T",
+                                                                                    string aplicaciones = "N",
+                                                                                    string precios = "S",
+                                                                                    string codigosadicionales = "N",
+                                                                                    string definicionesporalmacen = "N",
+                                                                                    string insumos = "N",
+                                                                                    string impuestos = "N",
+                                                                                    string cuentas = "N",
+                                                                                    string elementos = "N",
+                                                                                    string subproductos = "N",
+                                                                                    string soloproductospadre = "N",
+                                                                                    string rubros = "",
+                                                                                    string subrubros = "",
+                                                                                    string subsubrubros = "",
+                                                                                    string filtroArticulos1 = "",
+                                                                                    string filtroArticulos2 = "",
+                                                                                    string filtroArticulos3 = "",
+                                                                                    string? ordenarPor = null,
+                                                                                    string? direccion = null,
+                                                                                    string? estado = null,
+                                                                                    string incluirSucursalesHabilitadas = "N",
+                                                                                    string proveedorID = "",
+                                                                                    string? parametros = "",
+                                                                                    string? token = "",
+                                                                                    string incluirLotesDelProducto = "N");
+
+        cResponseProducto GetItem(string productoID = "",
+                                                                            int canalDeVentaID = 0,
+                                                                            string costos = "N",
+                                                                            string imagenes = "N",
+                                                                            string stock = "N",
+                                                                            string insumos = "N",
+                                                                            string impuestos = "N",
+                                                                            string cuentas = "N",
+                                                                            string elementos = "N",
+                                                                            string subproductos = "N",
+                                                                            string strIncluirExistenciasEnCero = "N",
+                                                                            string incluirExistenciasLotes = "N",
+                                                                            string incluirSucursalesHabilitadas = "N");
+
+        cResponseHistorialCostos HistorialCostosGet(int pageNumber,
+                                                                   int pageSize,
+                                                                   string? productoID);
     }
 
     internal sealed class ProductosServicio(
@@ -57,7 +113,11 @@ namespace GESI.CORE.API.BLL.V3
         IApiLogger apiLogger,
         ICanalesDeVentaBLL canalesDeVentaBLL,
         IImpuestoXProductoBLL impuestosProductoBLL,
-        IInsumosProductoBLL insumosProductoBLL) : IProductosServicio
+        IInsumosProductoBLL insumosProductoBLL,
+        IAplicacionesProductoBLL aplicacionesProductoBLL,
+        IGrupoProductosBLL gruposProductosBLL,
+        ICostosHistoricosBLL costosHistoricosBLL,
+        IConfiguracionBaseBLL configuracionesBLL) : IProductosServicio
     {
         /// <summary>
         /// Devuelve todos los productos de forma paginada
@@ -203,9 +263,6 @@ namespace GESI.CORE.API.BLL.V3
                                                                 pageSize,
                                                                 pageNumber));
 
-
-                    
-
                     strQueEstabaHaciendo = "Verifica los canales de venta habilitados por usuario  productosv2Mgr";
 
                     List<int> CanalesDeVenta = canalesDeVentaBLL.GetCanalesDeVentaPorUsuario(sesion.EmpresaID,
@@ -214,7 +271,6 @@ namespace GESI.CORE.API.BLL.V3
 
                     strQueEstabaHaciendo = "Va al getList a buscar los productos   productosv2Mgr";
 
-                   
                         
                         lstProductos = productosBLL.GetList(string.Join(",", lstCodigosProducto ?? new List<string>()),
                                                                                     CanalesDeVenta.ToArray(),
@@ -602,5 +658,1075 @@ namespace GESI.CORE.API.BLL.V3
             }
             return publica;
         }
+
+
+        /// <summary>
+        /// Devuelve un conjunto de resultados de una busqueda por expresión
+        /// </summary>
+        /// <param name="expresion"></param>
+        /// <param name="pageNumber"></param>
+        /// <param name="pageSize"></param>
+        /// <param name="costos"></param>
+        /// <param name="categoriasafiltrar"></param>
+        /// <param name="imagenes"></param>
+        /// <param name="stock"></param>
+        /// <param name="publicaecommerce"></param>
+        /// <returns></returns>
+        public cResponseProductos GetSearchResults(string expresion = "",
+                                                                                    int pageNumber = (int)pPaginacionValoresPredeterminados.pPageNumber,
+                                                                                    int pageSize = (int)pPaginacionValoresPredeterminados.pPageSize,
+                                                                                    string costos = "N",
+                                                                                    string categoriasafiltrar = "",
+                                                                                    string imagenes = "N",
+                                                                                    string stock = "N",
+                                                                                    string publicaecommerce = "T",
+                                                                                    string aplicaciones = "N",
+                                                                                    string precios = "S",
+                                                                                    string codigosadicionales = "N",
+                                                                                    string definicionesporalmacen = "N",
+                                                                                    string insumos = "N",
+                                                                                    string impuestos = "N",
+                                                                                    string cuentas = "N",
+                                                                                    string elementos = "N",
+                                                                                    string subproductos = "N",
+                                                                                    string soloproductospadre = "N",
+                                                                                    string rubros = "",
+                                                                                    string subrubros = "",
+                                                                                    string subsubrubros = "",
+                                                                                    string filtroArticulos1 = "",
+                                                                                    string filtroArticulos2 = "",
+                                                                                    string filtroArticulos3 = "",
+                                                                                    string? ordenarPor = null,
+                                                                                    string? direccion = null,
+                                                                                    string? estado = null,
+                                                                                    string incluirSucursalesHabilitadas = "N",
+                                                                                    string proveedorID = "",
+                                                                                    string? parametros = "",
+                                                                                    string? token = "",
+                                                                                    string incluirLotesDelProducto = "N")
+        {
+            cResponseProductos? oResponse = new cResponseProductos();
+
+            List<string>? lstCodigosProducto = new List<string>();
+
+            string strQueEstabaHaciendo = "";
+            
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
+
+            try
+            {
+               
+                pageSize = APIHelper.DevolverTamanoPaginacion((int)sesion.TamanoPagina, pageSize);
+
+                strQueEstabaHaciendo = "Verificando si se filtra por categorias";
+
+                string? strCategoriasIDs = sesion.CategoriasIDs;
+
+                if (sesion.CategoriasIDs?.Length == 0)
+                    strCategoriasIDs = null;
+
+                expresion = Uri.UnescapeDataString(expresion);
+
+                List<GESI.ERP.Core.V3.BO.cProducto> lstProductos = new List<GESI.ERP.Core.V3.BO.cProducto>();
+
+                strQueEstabaHaciendo = "Obteniendo codigos de productos";
+                string? strMensaje = "";
+                (lstCodigosProducto, strMensaje) = productosBLL.GetSearchResults(expresion,
+                                                                                            estado,
+                                                                                            categoriasafiltrar,
+                                                                                            sesion.CategoriasIDs ?? "",
+                                                                                            (ushort?)FiltroEcommerce(publicaecommerce), blnSoloProductosPadre: soloproductospadre == "S", strRubros: rubros, strSubRubros: subrubros, strSubSubRubros: subsubrubros,
+                                                                                                strFiltroArticulos1: filtroArticulos1, strFiltroArticulos2: filtroArticulos2,
+                                                                                                strFiltroArticulos3: filtroArticulos3, strOrdenarPor: ordenarPor, strDireccion: direccion, strProveedoresIDs: proveedorID);
+
+                string strCosto = "";
+
+                strQueEstabaHaciendo = "Verificando permisos sobre costos";
+
+                if (VerificarPermisoSobreCostos(sesion?.CostosXProveedor, costos))
+                    strCosto = costos;
+                else
+                    strCosto = "N";
+
+                List<int> CanalesDeVenta = new List<int>();
+
+                if (precios.Equals("S"))
+                {
+                    strQueEstabaHaciendo = "Obteniendo canales de venta habilitados por Usuario";                    
+                    CanalesDeVenta = canalesDeVentaBLL.GetCanalesDeVentaPorUsuario
+                                       (sesion?.EmpresaID ?? 0, sesion?.Usuario ?? "");
+                }
+
+                if (lstCodigosProducto == null)
+                    throw new cDatosNoEncontradosException("No se encontraron resultados");
+
+                if (lstCodigosProducto.Count == 0)
+                    throw new cDatosNoEncontradosException("No se encontraron resultados");
+
+
+                strQueEstabaHaciendo = "Buscando datos de productos (Antes de GetList)";
+
+                lstProductos = productosBLL.GetList(APIHelper.DevolverCodigosSeparadosPorComa(lstCodigosProducto, pageNumber, pageSize),
+                                                                            CanalesDeVenta.ToArray(),
+                                                                            strCosto,
+                                                                            sesion?.EstadoProductos,
+                                                                            categoriasafiltrar,
+                                                                            imagenes,
+                                                                            stock,
+                                                                            null,
+                                                                            (ushort?)FiltroEcommerce(publicaecommerce),
+                                                                            strDevolverAplicaciones: aplicaciones,
+                                                                            strDevolverCodigosAdicionales: codigosadicionales,
+                                                                            strDevolverDefinicionesPorAlmacen: definicionesporalmacen,
+                                                                            strDevolverCuentasXProducto: cuentas,
+                                                                            strDevolverElementosXEntidad: elementos,
+                                                                            strDevolverSubProductos: subproductos, strDevolverSucursalesHabilitadas: incluirSucursalesHabilitadas, strDevolverLotesDelProducto: incluirLotesDelProducto);
+
+
+                #region Paginacion
+                cPaginacion oPaginacion = new cPaginacion(lstCodigosProducto.Count,
+                                                        (int)Math.Ceiling((double)lstCodigosProducto.Count / pageSize),
+                                                        pageNumber,
+                                                        pageSize,
+                                                        pageNumber);
+                oResponse.paginacion = oPaginacion;
+                #endregion
+
+                //---------------------INSUMOS PRODUCTOS-----------------------------
+
+                List<cInsumoProducto>? lstInsumos = new List<cInsumoProducto>();
+                if (insumos.Equals("S"))
+                {
+                    strQueEstabaHaciendo = "Obteniendo Insumos de Productos";
+
+                    lstInsumos = insumosProductoBLL.GetList(string.Join(",", lstCodigosProducto));
+                }
+
+                //---------------------IMPUESTOS PRODUCTOS-----------------
+
+                List<cImpuestoXProducto>? lstImpuestos = new List<cImpuestoXProducto>();
+
+                if (impuestos.Equals("S"))
+                {
+                    strQueEstabaHaciendo = "Obteniendo impuestos de productos";
+                    lstImpuestos = impuestosProductoBLL.GetList(string.Join(",", lstCodigosProducto));
+                }
+
+                #region Pasaje a cProducto API
+
+                if (lstProductos?.Count > 0)
+                {
+                    strQueEstabaHaciendo = "Haciendo el pasaje a cProducto propio de la API";
+                    List<GESI.CORE.API.BO.V3.cProducto> lstHijos = new List<GESI.CORE.API.BO.V3.cProducto>();
+                    foreach (GESI.ERP.Core.V3.BO.cProducto oPrd in lstProductos)
+                    {
+                        if (lstInsumos?.Count > 0) // AGREGO LOS INSUMOS AL PRODUCTO
+                        {
+                            oPrd.Insumos = lstInsumos.Where(x => x.ProductoID == oPrd.ProductoID).ToList();
+                        }
+
+                        if (lstImpuestos?.Count > 0)
+                        {
+                            oPrd.Impuestos = lstImpuestos.Where(x => x.ProductoID == oPrd.ProductoID).ToList();
+                        }
+
+                        GESI.CORE.API.BO.V3.cProducto oHijo = new GESI.CORE.API.BO.V3.cProducto(oPrd);
+
+                        if (oPrd.Categorias?.Count > 0)
+                        {
+                            foreach (GESI.ERP.Core.V3.BO.cCategoriaXProducto oCategoria in oPrd.Categorias)
+                            {
+                                oHijo.ListaDeCategorias.Add(oCategoria.CategoriaID);
+                            }
+                        }
+
+                        lstHijos.Add(oHijo);
+                    }
+
+                    oResponse.productos = lstHijos;
+                }
+                else
+                    throw new cDatosNoEncontradosException("No se encontraron resultados");
+
+                oResponse.success = true;
+                #endregion
+
+
+                stopwatch.Stop();
+
+
+                TimeSpan ts = stopwatch.Elapsed;
+
+                string elapsedTime = System.String.Format("{0:00}:{1:00}:{2:00}.{3:00}",
+                    ts.Hours, ts.Minutes, ts.Seconds, ts.Milliseconds / 10);
+
+                apiLogger.LoguearSucesosAPI("Success Productos GetSearchResults: " + expresion,tTiposDeError.tInformativo,sesion?.Usuario,
+                                                Endpoint.Maestros.Productos("GetSearchResults"),sesion?.EmpresaID ?? 0,sesion?.SucursalID ?? 0,
+                                                cantidadDeElementos: lstCodigosProducto.Count,
+                                                numeroPagina: pageNumber, tamanoPagina: pageSize, parametros: parametros ?? "", TiempoEjecucion: elapsedTime,
+                                                IPRemoteDesktop: sesion?.RemoteIPAddress ?? "",
+                                                                        IPPublica: sesion?.Forwarded ?? "",
+                                                                        Agent: sesion?.UserAgent ?? "");
+
+                return oResponse;
+            }
+            catch (SqlException)
+            {
+                stopwatch.Stop();
+                throw;
+            }
+            catch (cIntervalException oIntervalo)
+            {
+                stopwatch.Stop();
+                #region INTERVALO EXCEDIDO
+                oResponse.paginacion = oIntervalo._paginacion;
+                oResponse.error = new cError((int)cCodigosError.cPaginacionExcedida, "Paginación Excedida", ApiErrors.errPaginacionExcedida);
+
+                oResponse.success = true;
+
+                return oResponse;
+                #endregion
+            }
+            catch (cDatosNoEncontradosException mensaje)
+            {
+                strQueEstabaHaciendo = "No se encontraron productos";
+                stopwatch.Stop();
+                TimeSpan ts = stopwatch.Elapsed;
+                string elapsedTime = System.String.Format("{0:00}:{1:00}:{2:00}.{3:00}",
+                    ts.Hours, ts.Minutes, ts.Seconds, ts.Milliseconds / 10);
+
+                apiLogger.LoguearSucesosAPI("Not Found Productos GetSearchResults: " + mensaje, tTiposDeError.tInformativo, sesion.Usuario,
+                                                Endpoint.Maestros.Productos("GetSearchResults"), sesion.EmpresaID, sesion.SucursalID,
+                                                cantidadDeElementos: lstCodigosProducto?.Count ?? 0,
+                                                numeroPagina: pageNumber, tamanoPagina: pageSize, parametros: parametros ?? "", TiempoEjecucion: elapsedTime,
+                                                IPRemoteDesktop: sesion?.RemoteIPAddress ?? "",
+                                                                        IPPublica: sesion?.Forwarded ?? "",
+                                                                        Agent: sesion?.UserAgent ?? "");
+
+                oResponse.error = new cError();
+                oResponse.error.code = (int)cCodigosError.cDatosNoEncontrados;
+                oResponse.error.message = mensaje.Message;
+                oResponse.success = true;
+                return oResponse;
+            }
+            catch (ArgumentNullException)
+            {
+                stopwatch.Stop();
+                throw;
+            }
+            catch (Exception ex)
+            {
+                stopwatch.Stop();
+                apiLogger.LoguearSucesosAPI(ex.Message + " Haciendo pv2: " + strQueEstabaHaciendo + " - Token:" + token, tTiposDeError.tError, sesion.Usuario,
+                                                Endpoint.Maestros.Productos("GetSearchResults"), sesion.EmpresaID, sesion.SucursalID,
+                                                cantidadDeElementos: lstCodigosProducto?.Count ?? 0,
+                                                numeroPagina: pageNumber, tamanoPagina: pageSize, parametros: parametros ?? "",
+                                                IPRemoteDesktop: sesion?.RemoteIPAddress ?? "",
+                                                                        IPPublica: sesion?.Forwarded ?? "",
+                                                                        Agent: sesion?.UserAgent ?? "");               
+                throw;
+            }
+        }
+
+        public cResponseProducto GetItem(string productoID = "",
+                                                                            int canalDeVentaID = 0,
+                                                                            string costos = "N",
+                                                                            string imagenes = "N",
+                                                                            string stock = "N",
+                                                                            string insumos = "N",
+                                                                            string impuestos = "N",
+                                                                            string cuentas = "N",
+                                                                            string elementos = "N",
+                                                                            string subproductos = "N",
+                                                                            string strIncluirExistenciasEnCero = "N",
+                                                                            string incluirExistenciasLotes = "N",
+                                                                            string incluirSucursalesHabilitadas = "N")
+        {
+            cResponseProducto oResponse = new cResponseProducto();
+
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
+
+            try
+            {
+
+                List<GESI.ERP.Core.V3.BO.cProducto> lstProductos = new List<GESI.ERP.Core.V3.BO.cProducto>();
+
+                if (string.IsNullOrEmpty(productoID))
+                    throw new cCodigoNoDetalladoException("Se debe especificar el parametro productoID");
+
+                string? strCostosXProveedor = sesion?.CostosXProveedor;
+                if (string.IsNullOrEmpty((strCostosXProveedor ?? "")))
+                    strCostosXProveedor = "N";
+
+                string strCosto = "";
+                if (VerificarPermisoSobreCostos(strCostosXProveedor, costos))
+                    strCosto = costos;
+                else
+                    strCosto = "N";
+
+
+
+                List<int> CanalesDeVenta = canalesDeVentaBLL.GetCanalesDeVentaPorUsuario(sesion?.EmpresaID ?? 0,
+                                                                                                                    sesion?.Usuario ?? "");
+
+
+                string decodificado1 = WebUtility.UrlDecode(productoID);
+
+                // Segunda decodificación
+                productoID = WebUtility.UrlDecode(decodificado1);
+
+
+                lstProductos = productosBLL.GetList(productoID,
+                                                                            CanalesDeVenta.ToArray(),
+                                                                            strCosto,
+                                                                            sesion?.EstadoProductos ,
+                                                                            strDevolverExistencias: stock,
+                                                                            strDevolverImagenes: imagenes,
+                                                                            intAAlmacenes: null,
+                                                                            strDevolverCuentasXProducto: cuentas,
+                                                                            strDevolverElementosXEntidad: elementos, strDevolverSubProductos: subproductos, blnBlIncluirExistenciaAlmacenesEn0: (strIncluirExistenciasEnCero == "S"), blnBlIncluirExistenciasLotes: (incluirExistenciasLotes.Equals("S")), strDevolverSucursalesHabilitadas: incluirSucursalesHabilitadas);
+
+                if (lstProductos?.Count > 0)
+                    oResponse.producto = new BO.V3.cProducto(lstProductos[0]);
+                else
+                    throw new cDatosNoEncontradosException("No se encontró el producto " + productoID);
+
+                //------------ INSUMOS PRODUCTO ------------------------------------------
+
+                if (insumos.Equals("S"))
+                {
+                    oResponse.producto.Insumos = insumosProductoBLL.GetList(oResponse.producto.ProductoID) ?? new List<cInsumoProducto>();
+                }
+
+                //-------------- IMPUESTOS PRODUCTO --------------------------------------
+
+                if (impuestos.Equals("S"))
+                {
+                    oResponse.producto.Impuestos = impuestosProductoBLL.GetList(oResponse.producto.ProductoID) ?? new List<cImpuestoXProducto>();
+                }
+
+
+                oResponse.success = true;
+                oResponse.paginacion = new cPaginacion(1, 1, 1, 1, 1);
+
+                stopwatch.Stop();
+
+
+                TimeSpan ts = stopwatch.Elapsed;
+
+                string elapsedTime = System.String.Format("{0:00}:{1:00}:{2:00}.{3:00}",
+                    ts.Hours, ts.Minutes, ts.Seconds, ts.Milliseconds / 10);
+
+                apiLogger.LoguearSucesosAPI(
+                    "Success Productos GetItem: " + productoID,tTiposDeError.tInformativo,sesion?.Usuario,
+                    Endpoint.Maestros.Productos("GetItem"),sesion?.EmpresaID ?? 0,sesion?.SucursalID ?? 0,
+                    cantidadDeElementos: 1,
+                    numeroPagina: 1,
+                    tamanoPagina: 1, TiempoEjecucion: elapsedTime, IPRemoteDesktop: sesion?.RemoteIPAddress ?? "",
+                                                                        IPPublica: sesion?.Forwarded ?? "",
+                                                                        Agent: sesion?.UserAgent ?? "");
+
+                return oResponse;
+
+            }
+            catch (SqlException mensaje)
+            {
+                stopwatch.Stop();
+                oResponse.error = new cError();
+                oResponse.error.code = (int)cCodigosError.cErrorInternoAplicacion;
+                oResponse.error.message = mensaje.Message;
+                oResponse.success = true;
+
+                return oResponse;
+            }
+            catch (cCodigoNoDetalladoException mensaje)
+            {
+                stopwatch.Stop();
+                oResponse.error = new cError();
+                oResponse.error.code = (int)cCodigosError.cCodigoDetalladoEnLaSolicitud;
+                oResponse.error.message = mensaje.Message;
+                oResponse.success = true;
+
+                return oResponse;
+            }
+            catch (cDatosNoEncontradosException mensaje)
+            {
+                stopwatch.Stop();
+
+                apiLogger.LoguearSucesosAPI(
+                    "Not Found Productos GetItem: " + productoID, tTiposDeError.tInformativo, sesion.Usuario,
+                    Endpoint.Maestros.Productos("GetItem"), sesion.EmpresaID, sesion.SucursalID,
+                    cantidadDeElementos: 1,
+                    numeroPagina: 1,
+                    tamanoPagina: 1, IPRemoteDesktop: sesion?.RemoteIPAddress ?? "",
+                                                                        IPPublica: sesion?.Forwarded ?? "",
+                                                                        Agent: sesion?.UserAgent ?? "");
+
+                oResponse.error = new cError();
+                oResponse.error.code = (int)cCodigosError.cDatosNoEncontrados;
+                oResponse.error.message = mensaje.Message;
+                oResponse.success = true;
+
+                return oResponse;
+
+            }
+            catch (Exception)
+            {
+                stopwatch.Stop();
+                throw;
+            }
+        }
+
+
+        /// <summary>
+        /// Devuelve las aplicaciones de Productos
+        /// </summary>
+        /// <param name="pageNumber"></param>
+        /// <param name="pageSize"></param>
+        /// <returns></returns>
+        public cResponseAplicacionesProducto AplicacionesaGetList(int pageNumber,
+                                                                        int pageSize)
+        {
+            cResponseAplicacionesProducto oResponse = new cResponseAplicacionesProducto();
+
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
+
+            try
+            {
+                
+                List<cAplicacionProducto>? lstAplicacionesProducto = aplicacionesProductoBLL.GetList();
+
+                if (lstAplicacionesProducto?.Count > 0)
+                {
+                    int cantidadElementos = lstAplicacionesProducto.Count;
+
+                    lstAplicacionesProducto = lstAplicacionesProducto?.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
+
+                    if (lstAplicacionesProducto?.Count > 0)
+                    {
+                        oResponse.aplicacionProductos = new List<cAplicacionesProducto>();
+                        foreach (cAplicacionProducto oAplicacion in lstAplicacionesProducto)
+                        {
+                            oResponse.aplicacionProductos.Add(new cAplicacionesProducto(oAplicacion));
+                        }
+                        oResponse.success = true;
+                        oResponse.paginacion = new cPaginacion(cantidadElementos,
+                                                                (int)Math.Ceiling((double)cantidadElementos / pageSize),
+                                                                pageNumber,
+                                                                pageSize,
+                                                                pageNumber);
+
+                        stopwatch.Stop();
+
+
+                        TimeSpan ts = stopwatch.Elapsed;
+
+                        string elapsedTime = System.String.Format("{0:00}:{1:00}:{2:00}.{3:00}",
+                            ts.Hours, ts.Minutes, ts.Seconds, ts.Milliseconds / 10);
+
+                        apiLogger.LoguearSucesosAPI("Success Aplicaciones de Productos GetList",tTiposDeError.tInformativo,sesion.Usuario,"",sesion.EmpresaID,sesion.SucursalID,TiempoEjecucion:elapsedTime,cantidadDeElementos:lstAplicacionesProducto.Count,numeroPagina:pageNumber,tamanoPagina:pageSize,IPRemoteDesktop:sesion.RemoteIPAddress);
+
+                    }
+                    else
+                        throw new cIntervalException(new cPaginacion(cantidadElementos,
+                                                    (int)Math.Ceiling((double)cantidadElementos / pageSize),
+                                                    pageNumber,
+                                                    pageSize,
+                                                    0));
+
+                }
+                else
+                    throw new cDatosNoEncontradosException("No se encontraron Aplicaciones");
+
+                return oResponse;
+            }
+            catch (SqlException)
+            {
+                stopwatch.Stop();
+                throw;
+            }
+            catch (cIntervalException oIntervalo)
+            {
+                stopwatch.Stop();
+                oResponse.paginacion = oIntervalo._paginacion;
+                oResponse.error = new cError((int)cCodigosError.cPaginacionExcedida, "Paginación Excedida", ApiErrors.errPaginacionExcedida);
+
+                return oResponse;
+            }
+            catch (cDatosNoEncontradosException mensaje)
+            {
+                stopwatch.Stop();
+                oResponse.error = new cError();
+                oResponse.error.code = (int)cCodigosError.cDatosNoEncontrados;
+                oResponse.error.message = mensaje.Message;
+                oResponse.success = true;
+                return oResponse;
+            }
+            catch (Exception)
+            {
+                stopwatch.Stop();
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Devuelve una lista de Grupo de Articulos
+        /// </summary>
+        /// <param name="pageNumber"></param>
+        /// <param name="pageSize"></param>
+        /// <returns></returns>
+        public  cResponseGrupoDeArticulos GrupoArticulosGetList(int pageNumber,
+                                                                        int pageSize)
+        {
+            cResponseGrupoDeArticulos oRespuesta = new cResponseGrupoDeArticulos();
+
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
+
+            try
+            {
+                
+
+
+                List<cGrupoDeArticulos>? lstGrupoArticulos = gruposProductosBLL.GetList();
+
+                if (lstGrupoArticulos?.Count > 0)
+                {
+                    int cantidadElementos = lstGrupoArticulos.Count;
+
+                    lstGrupoArticulos = lstGrupoArticulos?.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
+
+                    if (lstGrupoArticulos?.Count > 0)
+                    {
+                        oRespuesta.grupoArticulos = lstGrupoArticulos;
+                        oRespuesta.success = true;
+                        oRespuesta.paginacion = new cPaginacion(cantidadElementos,
+                                                                (int)Math.Ceiling((double)cantidadElementos / pageSize),
+                                                                pageNumber,
+                                                                pageSize,
+                                                                pageNumber);
+
+                        stopwatch.Stop();
+
+
+                        TimeSpan ts = stopwatch.Elapsed;
+
+                        string elapsedTime = System.String.Format("{0:00}:{1:00}:{2:00}.{3:00}",
+                            ts.Hours, ts.Minutes, ts.Seconds, ts.Milliseconds / 10);
+
+                        apiLogger.LoguearSucesosAPI("Success Grupo de Productos GetList",tTiposDeError.tInformativo,sesion.Usuario,
+                                                        Endpoint.Maestros.GrupoDeProductos("GetList"),sesion.EmpresaID,sesion.SucursalID,
+                                                        cantidadDeElementos: lstGrupoArticulos.Count,
+                                                        TiempoEjecucion: elapsedTime,
+                                                        numeroPagina: pageNumber,
+                                                        tamanoPagina: pageSize,
+                                                        IPRemoteDesktop: sesion?.RemoteIPAddress ?? "",
+                                                                        IPPublica: sesion?.Forwarded ?? "",
+                                                                        Agent: sesion?.UserAgent ?? "");
+
+
+                    }
+                    else
+                        throw new cIntervalException(new cPaginacion(cantidadElementos,
+                                                    (int)Math.Ceiling((double)cantidadElementos / pageSize),
+                                                    pageNumber,
+                                                    pageSize,
+                                                    0));
+
+                }
+                else
+                    throw new cDatosNoEncontradosException("No se encontraron grupos de productos");
+
+                return oRespuesta;
+            }
+            catch (SqlException)
+            {
+                stopwatch.Stop();
+                throw;
+            }
+            catch (cIntervalException oIntervalo)
+            {
+                stopwatch.Stop();
+                oRespuesta.paginacion = oIntervalo._paginacion;
+                oRespuesta.error = new cError((int)cCodigosError.cPaginacionExcedida, "Paginación Excedida", ApiErrors.errPaginacionExcedida);
+
+                return oRespuesta;
+            }
+            catch (cDatosNoEncontradosException mensaje)
+            {
+                stopwatch.Stop();
+
+                oRespuesta.error = new cError();
+                oRespuesta.error.code = (int)cCodigosError.cDatosNoEncontrados;
+                oRespuesta.error.message = mensaje.Message;
+                oRespuesta.success = true;
+
+                return oRespuesta;
+            }
+            catch (Exception)
+            {
+                stopwatch.Stop();
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Devuelve un objeto GrupoArticulos
+        /// </summary>
+        /// <param name="grupoArtID"></param>
+        /// <returns></returns>
+        public cResponseGrupoDeArticulo GrupoArticulosGetItem(int grupoArtID = 0)
+        {
+            #region Timers
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
+            #endregion
+
+            try
+            {
+                cResponseGrupoDeArticulo oRespuesta = new cResponseGrupoDeArticulo();
+                GESI.ERP.Core.V3.BO.cGrupoDeArticulos? oAlmacen = null;
+
+                if (grupoArtID == 0)
+                    throw new cCodigoNoDetalladoException("No se especifico un GrupoArticulosID");
+                else
+                    oAlmacen = gruposProductosBLL.GetItem(grupoArtID);
+
+                if (oAlmacen == null)
+                    throw new cDatosNoEncontradosException("No se encontro el almacen");
+                else
+                {
+                    oRespuesta.grupoArticulos = oAlmacen;
+                    oRespuesta.success = true;
+                    oRespuesta.paginacion = new cPaginacion(1, 1, 1, 1, 1);
+
+                }
+
+
+                #region Timer
+                stopwatch.Stop();
+
+
+                TimeSpan ts = stopwatch.Elapsed;
+
+                // Formatear e imprimir el tiempo transcurrido
+                string elapsedTime = System.String.Format("{0:00}:{1:00}:{2:00}.{3:00}",
+                    ts.Hours, ts.Minutes, ts.Seconds, ts.Milliseconds / 10);
+
+                apiLogger.LoguearSucesosAPI("Success GrupoArticulos GetItem. GrupoArtID: " + grupoArtID,tTiposDeError.tInformativo,sesion.Usuario,
+                                                Endpoint.Maestros.GrupoDeProductos("GetItem"),sesion.EmpresaID,sesion.SucursalID,
+                                                TiempoEjecucion: elapsedTime,
+                                                cantidadDeElementos: 1,
+                                                numeroPagina: 1,
+                                                tamanoPagina: 1,
+                                                IPRemoteDesktop: sesion?.RemoteIPAddress ?? "",
+                                                                        IPPublica: sesion?.Forwarded ?? "",
+                                                                        Agent: sesion?.UserAgent ?? "");
+
+                #endregion
+
+
+
+                return oRespuesta;
+            }
+            catch (SqlException)
+            {
+                stopwatch.Stop();
+                throw;
+            }
+            catch (cCodigoNoDetalladoException)
+            {
+                stopwatch.Stop();
+                throw;
+            }
+            catch (cDatosNoEncontradosException)
+            {
+
+                apiLogger.LoguearSucesosAPI("Not Found GrupoArticulos GetItem. GrupoArtID: " + grupoArtID, tTiposDeError.tInformativo, sesion.Usuario,
+                                                Endpoint.Maestros.GrupoDeProductos("GetItem"), sesion.EmpresaID, sesion.SucursalID,
+                                                cantidadDeElementos: 1,
+                                                numeroPagina: 1,
+                                                tamanoPagina: 1,
+                                                IPRemoteDesktop: sesion?.RemoteIPAddress ?? "",
+                                                                        IPPublica: sesion?.Forwarded ?? "",
+                                                                        Agent: sesion?.UserAgent ?? "");
+
+                stopwatch.Stop();
+                throw;
+            }
+            catch (Exception)
+            {
+                stopwatch.Stop();
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Devuelve el historial de costos de un producto
+        /// </summary>
+        /// <param name="pageNumber"></param>
+        /// <param name="pageSize"></param>
+        /// <param name="productoID"></param>
+        /// <returns></returns>
+        public cResponseHistorialCostos HistorialCostosGet(int pageNumber,
+                                                                   int pageSize,
+                                                                   string? productoID)
+        {
+            #region Timers
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
+            #endregion
+
+            try
+            {
+                cResponseHistorialCostos oRespuesta = new cResponseHistorialCostos();
+
+
+                if (productoID == null || productoID.Length == 0)
+                    throw new cCodigoNoDetalladoException("No se especifico un ProductoID");
+
+                List<cCostoHistorico>? historialCostos = costosHistoricosBLL.GetList(productoID);
+
+                if (historialCostos?.Count > 0)
+                {
+                    int cantidadElementos = historialCostos.Count;
+
+                    historialCostos = historialCostos?.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
+
+                    if (historialCostos?.Count > 0)
+                    {
+                        #region Paginacion
+                        oRespuesta.historialCostos = historialCostos;
+                        oRespuesta.success = true;
+                        oRespuesta.paginacion = new cPaginacion(cantidadElementos, (int)Math.Ceiling((double)cantidadElementos / pageSize), pageNumber, pageSize, pageNumber);
+                        #endregion
+
+                        #region Timers y Logs Informativos
+                        stopwatch.Stop();
+
+
+                        TimeSpan ts = stopwatch.Elapsed;
+
+                        // Formatear e imprimir el tiempo transcurrido
+                        string elapsedTime = System.String.Format("{0:00}:{1:00}:{2:00}.{3:00}",
+                            ts.Hours, ts.Minutes, ts.Seconds, ts.Milliseconds / 10);
+
+                        apiLogger.LoguearSucesosAPI("Success CostosHistoricos GetList", tTiposDeError.tInformativo, sesion.Usuario,
+                                                Endpoint.Maestros.GrupoDeProductos("GetItem"), sesion.EmpresaID, sesion.SucursalID,
+                                                TiempoEjecucion: elapsedTime,
+                                                cantidadDeElementos: 1,
+                                                numeroPagina: 1,
+                                                tamanoPagina: 1,
+                                                IPRemoteDesktop: sesion?.RemoteIPAddress ?? "",
+                                                                        IPPublica: sesion?.Forwarded ?? "",
+                                                                        Agent: sesion?.UserAgent ?? "");
+
+                        #endregion
+
+                        return oRespuesta;
+
+
+                    }
+                    else
+                        throw new cIntervalException(new cPaginacion(cantidadElementos, (int)Math.Ceiling((double)cantidadElementos / pageSize), pageNumber, pageSize, 0));
+
+                }
+                else
+                    throw new cDatosNoEncontradosException("No se encontraron CostosHistoricos");
+
+            }
+            catch (SqlException)
+            {
+                stopwatch.Stop();
+                throw;
+            }
+            catch (cCodigoNoDetalladoException)
+            {
+                stopwatch.Stop();
+                throw;
+            }
+            catch (cDatosNoEncontradosException)
+            {
+                apiLogger.LoguearSucesosAPI("Not Found GrupoArticulos GetItem", tTiposDeError.tInformativo, sesion.Usuario,
+                                                Endpoint.Maestros.GrupoDeProductos("GetItem"), sesion.EmpresaID, sesion.SucursalID,
+                                                cantidadDeElementos: 1,
+                                                numeroPagina: 1,
+                                                tamanoPagina: 1,
+                                                IPRemoteDesktop: sesion?.RemoteIPAddress ?? "",
+                                                                        IPPublica: sesion?.Forwarded ?? "",
+                                                                        Agent: sesion?.UserAgent ?? "");               
+
+                stopwatch.Stop();
+                throw;
+            }
+            catch (Exception)
+            {
+                stopwatch.Stop();
+                throw;
+            }
+
+        }
+
+        /// <summary>
+        /// Crea productos en lote 
+        /// </summary>
+        /// <param name="lstProductos"></param>
+        /// <returns></returns>
+        public List<cResponseProductosSave> Save(List<GESI.ERP.Core.V3.BO.cProducto> lstProductos,
+                                                                                            bool blAlta)
+        {
+            #region Timers
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
+            #endregion
+
+            List<cResponseProductosSave> oResponse = new List<cResponseProductosSave>();
+
+            try
+            {
+                if (lstProductos == null || lstProductos.Count == 0)
+                    throw new cCodigoNoDetalladoException("No se encontraron productos a crear");
+
+                if (lstProductos.Count > 10)
+                    throw new ArgumentOutOfRangeException("Se permite un maximo de 10 productos por llamada");
+
+                lstProductos.ForEach(x => x.EmpresaID = (short)(sesion?.EmpresaID ?? 0));
+                
+                string strMensajes = "";
+
+                bool FueImportado = false;
+                int i = 1;
+                foreach (GESI.ERP.Core.V3.BO.cProducto oProductoACrear in lstProductos)
+                {
+                    FueImportado = false;
+                    cResponseProductosSave oRespuesta = new cResponseProductosSave();
+                    try
+                    {
+                        (GESI.ERP.Core.V3.BO.cProducto? oProductoCreado, FueImportado) = productosBLL.Save(oProductoACrear,
+                                                                                                                    blAlta,
+                                                                                                                    out strMensajes);
+
+                        oRespuesta = new cResponseProductosSave(FueImportado, oProductoACrear.ProductoID,
+                                                                                        oProductoACrear.Descripcion, "",
+                                                                                        oProductoACrear.Estado,
+                                                                                        oProductoACrear.AlicuotaIVA, i);
+
+
+
+                    }
+                    catch (SqlException sex)
+                    {
+                        oRespuesta = new cResponseProductosSave(FueImportado, oProductoACrear.ProductoID,
+                                                                                        oProductoACrear.Descripcion,
+                                                                                        sex.Message,
+                                                                                        oProductoACrear.Estado,
+                                                                                        oProductoACrear.AlicuotaIVA, i);
+
+                        oRespuesta.error = APIHelper.GenerarMensajePersonalizadoPorErrorExcepcion(sex);
+
+                    }
+                    catch (Exception ex)
+                    {
+                        oRespuesta = new cResponseProductosSave(FueImportado, oProductoACrear.ProductoID,
+                                                                                        oProductoACrear.Descripcion,
+                                                                                        ex.Message,
+                                                                                        oProductoACrear.Estado,
+                                                                                        oProductoACrear.AlicuotaIVA, i);
+
+                        oRespuesta.error = APIHelper.GenerarMensajePersonalizadoPorErrorExcepcion(ex);
+
+                    }
+                    i++;
+                    oResponse.Add(oRespuesta);
+                }
+
+                return oResponse;
+
+            }
+            catch (ArgumentOutOfRangeException intex)
+            {
+                cResponseProductosSave oRespuesta = new cResponseProductosSave(false, "", "", intex.Message, "", 0, 0);
+                oRespuesta.error = APIHelper.GenerarMensajePersonalizadoPorErrorExcepcion(intex);
+                oResponse.Add(oRespuesta);
+                stopwatch.Stop();
+                return oResponse;
+            }
+            catch (cCodigoNoDetalladoException cex)
+            {
+                cResponseProductosSave oRespuesta = new cResponseProductosSave(false, "", "", cex.Message, "", 0, 0);
+                oRespuesta.error = APIHelper.GenerarMensajePersonalizadoPorErrorExcepcion(cex);
+                oResponse.Add(oRespuesta);
+                stopwatch.Stop();
+                return oResponse;
+            }
+        }
+
+
+
+        /// <summary>
+        /// Devuelve las configuraciones de productos
+        /// </summary>
+        /// <param name="seccionID"></param>
+        /// <param name="itemID"></param>
+        /// <returns></returns>
+        public GESI.CORE.API.BO.V3.cConfiguraciones GetConfiguraciones(string seccionID = "", string itemID = "")
+        {
+            GESI.CORE.API.BO.V3.cConfiguraciones oConfiguraciones = new GESI.CORE.API.BO.V3.cConfiguraciones();
+            
+            try
+            {
+                List<cConfiguracionBase>? lstConfiguraciones = configuracionesBLL.GetList("Productos", seccionID, itemID);
+
+                List<cConfiguracionBase>? lstConfiguracionesNoEncontradas = new List<cConfiguracionBase>();
+
+                if (lstConfiguraciones?.Count > 0)
+                    lstConfiguraciones = lstConfiguraciones.Where(x => ConfigItemsProductos.Preferencias.Contains(x.ItemID)).ToList();
+
+                if (lstConfiguraciones?.Count > 0)
+                    lstConfiguracionesNoEncontradas = lstConfiguraciones.Where(x => !ConfigItemsProductos.Preferencias.Contains(x.ItemID)).ToList();
+
+                if (lstConfiguraciones?.Count > 0)
+                {
+                    cConfiguracionBase? oConfiguracion = lstConfiguraciones.FirstOrDefault(x => x.ItemID.Equals("DescripcionFiltro1Plural"));
+
+                    if (oConfiguracion == null)
+                    {
+                        oConfiguracion = new cConfiguracionBase();
+                        oConfiguracion.GrupoID = "Productos";
+                        oConfiguracion.SeccionID = "Preferencias";
+                        oConfiguracion.ItemID = "DescripcionFiltro1Plural";
+                        oConfiguracion.Valor = "Marcas";
+
+                        lstConfiguraciones.Add(oConfiguracion);
+
+                        oConfiguracion = new cConfiguracionBase();
+                        oConfiguracion.GrupoID = "Productos";
+                        oConfiguracion.SeccionID = "Preferencias";
+                        oConfiguracion.ItemID = "DescripcionFiltro1Singular";
+                        oConfiguracion.Valor = "Marca";
+
+                        lstConfiguraciones.Add(oConfiguracion);
+
+                    }
+
+                    oConfiguracion = lstConfiguraciones.FirstOrDefault(x => x.ItemID.Equals("DescripcionFiltro2Plural"));
+
+                    if (oConfiguracion == null)
+                    {
+                        oConfiguracion = new cConfiguracionBase();
+                        oConfiguracion.GrupoID = "Productos";
+                        oConfiguracion.SeccionID = "Preferencias";
+                        oConfiguracion.ItemID = "DescripcionFiltro1Plural";
+                        oConfiguracion.Valor = "Marcas";
+
+                        lstConfiguraciones.Add(oConfiguracion);
+
+                        oConfiguracion = new cConfiguracionBase();
+                        oConfiguracion.GrupoID = "Productos";
+                        oConfiguracion.SeccionID = "Preferencias";
+                        oConfiguracion.ItemID = "DescripcionFiltro1Singular";
+                        oConfiguracion.Valor = "Marca";
+
+                        lstConfiguraciones.Add(oConfiguracion);
+
+                    }
+
+
+                    oConfiguraciones.success = true;
+                    oConfiguraciones.grupo = "productos";
+                    oConfiguraciones.secciones = lstConfiguraciones
+                                                    .GroupBy(x => x.SeccionID)
+                                                    .ToDictionary(
+                                                        g => g.Key.ToLower(), // opcional normalizar
+                                                        g => g.Select(x => new SeccionItem(x)).ToList()
+                                                    );
+                }
+
+                return oConfiguraciones;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
+
+        /// <summary>
+        /// Actualiza los costos del proveedor
+        /// </summary>
+        /// <param name="lstCostos"></param>
+        /// <returns></returns>
+        /// <exception cref="cCodigoNoDetalladoException"></exception>
+        public  List<dActualizacionCostoProductoProveedorResponse> ActualizacionCostosPorProveedor(List<cActualizacionCosto>? lstCostos,
+                                                                                                            bool blnAgregarFaltantes)
+        {
+
+            if (lstCostos == null ||
+                lstCostos.Count == 0)
+                throw new cCodigoNoDetalladoException("No se especificaron costos de proveedor a actualizar");
+
+            List<dActualizacionCostoProductoProveedorResponse> oRespuesta =
+                new List<dActualizacionCostoProductoProveedorResponse>();
+    
+                foreach (cActualizacionCosto oCostoAActualizar in lstCostos)
+                {
+                    List<dActualizacionCostoProductoProveedorRequest> lstCostosProv = new List<dActualizacionCostoProductoProveedorRequest>();
+                    lstCostosProv = ConvertirUpdateACostoProductoProveedor(oCostoAActualizar.costos ?? new List<cUpdateCostoProducto>());
+                    lstCostosProv.ForEach(x => x.ProveedorID = oCostoAActualizar.proveedorID);
+                    lstCostosProv.ForEach(x => x.Fecha = DateTime.Now);
+
+                    try
+                    {
+                        oRespuesta.AddRange(productosBLL.ActualizarCostosPorProveedor(oCostoAActualizar.proveedorID, lstCostosProv, blnAgregarFaltantes));
+                    }
+                    catch (Exception ex)
+                    {
+                        dActualizacionCostoProductoProveedorResponse oCostoProv = new dActualizacionCostoProductoProveedorResponse();
+                        oCostoProv.message = ex.Message;
+                        oRespuesta.Add(oCostoProv);
+                    }
+                }
+            
+
+            #region Log
+            foreach (dActualizacionCostoProductoProveedorResponse oRespuestaUnitaria in oRespuesta)
+            {
+                apiLogger.LoguearSucesosAPI($"Producto {oRespuestaUnitaria.ProductoID} del proveedor {oRespuestaUnitaria.ProveedorID} con costo {oRespuestaUnitaria.CostoNeto} message: {oRespuestaUnitaria.message}",
+                    (oRespuestaUnitaria.success) ? tTiposDeError.tInformativo : tTiposDeError.tError,
+                    sesion?.Usuario ?? "",
+                    Endpoint.Maestros.Productos("Costos/Update"),
+                    sesion?.EmpresaID ?? 0,
+                    sesion?.SucursalID ?? 0);
+            }
+            #endregion
+
+
+            return oRespuesta;
+        }
+
+
+        private static List<dActualizacionCostoProductoProveedorRequest> ConvertirUpdateACostoProductoProveedor(List<cUpdateCostoProducto> lstCostos)
+        {
+            List<dActualizacionCostoProductoProveedorRequest> lstCostoProducto = new List<dActualizacionCostoProductoProveedorRequest>();
+            foreach (cUpdateCostoProducto oUpdateCosto in lstCostos)
+            {
+                dActualizacionCostoProductoProveedorRequest oCosto = new dActualizacionCostoProductoProveedorRequest();
+                oCosto.ProductoID = oUpdateCosto.ProductoID;
+                oCosto.ReferenciaProveedor = oUpdateCosto.ReferenciaProveedor;
+                oCosto.CostoBasePrecios = oUpdateCosto.CostoBasePrecios;
+                oCosto.CostoBruto = oUpdateCosto.CostoBruto;
+                oCosto.DescuentoArticulo = oUpdateCosto.DescuentoArticulo;
+                oCosto.DescuentoGeneral = oUpdateCosto.DescuentoGeneral;
+                oCosto.DivisaID = (short)oUpdateCosto.DivisaID;
+                lstCostoProducto.Add(oCosto);
+            }
+
+            return lstCostoProducto;
+        }
+
     }
 }
+

@@ -30,6 +30,8 @@ namespace GESI.CORE.API.BLL.V3
 
         string CostosXProveedor { get; }
 
+        string? EstadoProductos { get; }
+
         void Iniciar(int empresaID, int sucursalID, string usuario, string metodoAutenticacion,
                      string? correlationId, string? remoteIP, string? forwarded, string? userAgent);
     }
@@ -52,6 +54,8 @@ namespace GESI.CORE.API.BLL.V3
         public string CategoriasIDs { get; private set; } = "";
 
         public string CostosXProveedor { get; private set; } = "";
+
+        public string? EstadoProductos { get; private set; } = null;
 
         public void Iniciar(int empresaID, int sucursalID, string usuario, string metodoAutenticacion,
                             string? correlationId, string? remoteIP, string? forwarded, string? userAgent)
