@@ -26,14 +26,22 @@ namespace GESI.CORE.API.BLL.V3
         string Forwarded { get; }
         string UserAgent { get; }
         bool Iniciada { get; }
-        string CategoriasIDs { get; }
+        string? CategoriasIDs { get; }
 
         string CostosXProveedor { get; }
 
         string? EstadoProductos { get; }
 
+        int[]? Almacenes { get; }
+
+        string? ReleePreciosAlImportarComprobantes { get; } 
+
+        string? TiposDeClientes { get; } 
+
+        bool UsuarioExterno { get; }
+
         void Iniciar(int empresaID, int sucursalID, string usuario, string metodoAutenticacion,
-                     string? correlationId, string? remoteIP, string? forwarded, string? userAgent);
+                     string? correlationId, string? remoteIP, string? forwarded, string? userAgent,string? categoriasIDs, string? costosxproveedor, string? estadoProductos, string releePreciosAlImportarComprobantes,string? almacenes);
     }
 
     internal sealed class ApiSessionManager(SessionManagerAccessor accessor, IOptions<ApiSettings> config) : IApiSessionManager
@@ -51,14 +59,25 @@ namespace GESI.CORE.API.BLL.V3
         public string Forwarded { get; private set; } = "";
         public string UserAgent { get; private set; } = "";
         public bool Iniciada => accessor.Current is not null;
-        public string CategoriasIDs { get; private set; } = "";
+        public string? CategoriasIDs { get; private set; } = null;
 
         public string CostosXProveedor { get; private set; } = "";
 
         public string? EstadoProductos { get; private set; } = null;
 
+        public int[]? Almacenes { get; private set; } = null;
+
+        public string? ReleePreciosAlImportarComprobantes { get; private set; } = null;
+
+        public string? TiposDeClientes { get; private set; } = null;
+
+        public bool UsuarioExterno { get; private set;  } = false;
+
+
+
+
         public void Iniciar(int empresaID, int sucursalID, string usuario, string metodoAutenticacion,
-                            string? correlationId, string? remoteIP, string? forwarded, string? userAgent)
+                            string? correlationId, string? remoteIP, string? forwarded, string? userAgent,string? categoriasIDs,string? costosxproveedor,string? estadoProductos, string releePreciosAlImportarComprobantes, string? almacenes)
         {
             accessor.Current = new SessionManager
             {
@@ -74,6 +93,16 @@ namespace GESI.CORE.API.BLL.V3
             RemoteIPAddress = remoteIP ?? "";
             Forwarded = forwarded ?? "";
             UserAgent = userAgent ?? "";
-        }
+            CategoriasIDs = categoriasIDs;
+            CostosXProveedor = costosxproveedor;
+            EstadoProductos = estadoProductos;
+            ReleePreciosAlImportarComprobantes = releePreciosAlImportarComprobantes;
+
+            if(almacenes != null)
+                Almacenes = almacenes
+                                .Split(',')
+                                .Select(int.Parse)
+                                .ToArray(); ;
+                                    }
     }
 }

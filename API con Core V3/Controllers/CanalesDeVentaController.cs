@@ -9,13 +9,13 @@ namespace API_con_Core_V3.Controllers
 {
     [ApiController]
     [Route("api/Maestros/[controller]")]
-    public class CanalesDeVentaController(ICanalesDeVentaServicio canalesDeVenta) : ControllerBase
+    public class CanalesDeVentaController(ICanalesDeVentaServicio canalesDeVenta) : ApiControllerBase
     {
 
         [HttpGet("GetList")]
         public ActionResult<cResponseCanalesDeVenta> Get(
         int pageNumber = (int)pPaginacionValoresPredeterminados.pPageNumber,
         int pageSize = (int)pPaginacionValoresPredeterminados.pPageSize)
-        => Ok(canalesDeVenta.GetList(pageNumber, pageSize));
+        => Responder(() => canalesDeVenta.GetList(pageNumber, pageSize));
     }
 }

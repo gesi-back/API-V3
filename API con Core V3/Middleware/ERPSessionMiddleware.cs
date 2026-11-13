@@ -59,10 +59,25 @@ namespace API_con_Core_V3.Middleware
             }
 
             // Empresa y sucursal: 1) headers  2) valores por defecto del usuario
-            int empresaId, sucursalId;
-            bool blEncontradoEnHabilitacionesAPI = false;
+            int empresaId = 0, sucursalId = 0;
+            
             bool vieneEmpresa = req.Headers.ContainsKey(HeaderEmpresa);
             bool vieneSucursal = req.Headers.ContainsKey(HeaderSucursal);
+
+            cAPIHabilitaciones? oAPIHabilitacion = acceso.ObtenerHabilitacionAPIDelUsuario(usuario);
+
+            if(oAPIHabilitacion == null)
+            {
+                apiLogger.LoguearSucesosAPI("Usuario no habilitado en Habilitaciones API", tTiposDeError.tError, usuario,
+                        req.Path.Value, 0, 0, parametros: req.QueryString.ToString(), IPPublica: ipPublica, Agent: agent);
+
+                await ResponderError(context, HttpStatusCode.BadRequest, 0,
+                    "El usuario no se encuentra habilitado para consumir la API REST");
+                return;
+            }
+
+            empresaId = oAPIHabilitacion.EmpresaID;
+            sucursalId = oAPIHabilitacion.SucursalID;
 
             if (vieneEmpresa || vieneSucursal)
             {
@@ -72,32 +87,22 @@ namespace API_con_Core_V3.Middleware
                         $"'{HeaderEmpresa}' y '{HeaderSucursal}' deben venir juntos y ser numéricos.");
                     return;
                 }
-                if (!acceso.UsuarioPuedeOperar(usuario, empresaId, sucursalId))
+                
+            }            
+            else
+            {
+                if (empresaId <= 0)
                 {
                     await ResponderError(context, HttpStatusCode.Forbidden, 0,
-                        $"El usuario no está habilitado para la empresa {empresaId} / sucursal {sucursalId}.");
+                        "No se pudo determinar la empresa y sucursal del usuario.");
                     return;
                 }
             }
-            else if (acceso.ObtenerEmpresaYSucursalPorDefecto(usuario) is { } porDefecto)
-            {
-                (blEncontradoEnHabilitacionesAPI, empresaId, sucursalId) = porDefecto;
 
-                if (!blEncontradoEnHabilitacionesAPI)
-                {
-                    apiLogger.LoguearSucesosAPI("Usuario no habilitado en Habilitaciones API", tTiposDeError.tError, usuario,
-                        req.Path.Value, 0, 0, parametros: req.QueryString.ToString(), IPPublica: ipPublica, Agent: agent);
-
-                    await ResponderError(context, HttpStatusCode.Forbidden,
-                        (int)cCodigosError.cUsuarioIncorrecto,          // ajustar al código real de tu enum
-                        $"El usuario '{usuario}' no está habilitado en Habilitaciones API.");
-                    return;                                               // corta el pipeline: no llega al controller
-                }
-            }
-            else
+            if (!acceso.UsuarioPuedeOperar(usuario, empresaId, sucursalId))
             {
                 await ResponderError(context, HttpStatusCode.Forbidden, 0,
-                    "No se pudo determinar la empresa y sucursal del usuario.");
+                    $"El usuario no está habilitado para la empresa {empresaId} / sucursal {sucursalId}.");
                 return;
             }
 
@@ -106,7 +111,7 @@ namespace API_con_Core_V3.Middleware
                 correlationId: context.Items["CorrelationId"] as string,
                 remoteIP: context.Connection.RemoteIpAddress?.ToString(),
                 forwarded: ipPublica,
-                userAgent: agent);
+                userAgent: agent,oAPIHabilitacion.CategoriasIDs, oAPIHabilitacion.CostosDeProveedor, oAPIHabilitacion.Estados, oAPIHabilitacion.ReleerPreciosAlImportarComprobantes, oAPIHabilitacion.AlmacenesIDs);
 
             // TODO: EvaluarMetodoSolicitud(context, sesion) — pasame qué validaba y lo agrego acá
 

@@ -125,11 +125,7 @@ namespace GESI.CORE.API.BO.V3
 
 
 
-        /// <summary>
-        /// Constructor original
-        /// </summary>
-        public cProducto()
-        { }
+       
     }
 
     

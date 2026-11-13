@@ -173,8 +173,28 @@ namespace GESI.CORE.API.BLL.V3
                                                                             string? estado = null)
         {
 
+            // Parámetros S/N/P/T sin distinguir mayúsculas
+            costoSolicitado = Flag(costoSolicitado);
+            imagenes = Flag(imagenes);
+            stock = Flag(stock);
+            publicaEcommerce = Flag(publicaEcommerce, "T");
+            aplicaciones = Flag(aplicaciones);
+            precios = Flag(precios, "S");
+            codigosadicionales = Flag(codigosadicionales);
+            definicionesporalmacen = Flag(definicionesporalmacen);
+            insumos = Flag(insumos);
+            impuestos = Flag(impuestos);
+            cuentas = Flag(cuentas);
+            elementos = Flag(elementos);
+            subproductos = Flag(subproductos);
+            soloproductospadre = Flag(soloproductospadre);
+            incluirExistenciaAlmacenesEnCero = Flag(incluirExistenciaAlmacenesEnCero);
+            incluirExistenciasLotes = Flag(incluirExistenciasLotes);
+            incluirSucursalesHabilitadas = Flag(incluirSucursalesHabilitadas);
+            incluirLotesDelProducto = Flag(incluirLotesDelProducto);
+
             string strQueEstabaHaciendo = "";
-           
+
 
             cResponseProductos oRespuesta = new cResponseProductos();
             List<string>? lstCodigosProducto = new List<string>();
@@ -609,33 +629,27 @@ namespace GESI.CORE.API.BLL.V3
             }
         }
 
-        private bool VerificarPermisoSobreCostos(string? costoUsuario,
-                                                       string costoSolicitado)
+        /// <summary>
+        /// Indica si el usuario puede ver el nivel de costos solicitado.
+        /// Deniega por defecto: un permiso de usuario nulo, vacío o desconocido equivale a "N",
+        /// y un valor solicitado desconocido no se habilita.
+        /// </summary>
+        private static string Flag(string? valor, string porDefecto = "N")
+            => string.IsNullOrWhiteSpace(valor) ? porDefecto : valor.Trim().ToUpperInvariant();
+
+        private static bool VerificarPermisoSobreCostos(string? costoUsuario,
+                                                       string? costoSolicitado)
         {
-            bool Habilitado = true;
-            switch (costoUsuario)
+            if (costoSolicitado == "N")
+                return true;   // no pide costos: siempre permitido
+
+            return (costoUsuario, costoSolicitado) switch
             {
-                case "N":
-                    switch (costoSolicitado)
-                    {
-                        case "P":
-                            Habilitado = false;
-                            break;
-                        case "S":
-                            Habilitado = false;
-                            break;
-                    }
-                    break;
-                case "P":
-                    switch (costoSolicitado)
-                    {
-                        case "S":
-                            Habilitado = false;
-                            break;
-                    }
-                    break;
-            }
-            return Habilitado;
+                ("S", "S") => true,
+                ("S", "P") => true,
+                ("P", "P") => true,
+                _ => false,
+            };
         }
 
         private int? FiltroEcommerce(string publicaEcommerce)
@@ -705,6 +719,24 @@ namespace GESI.CORE.API.BLL.V3
                                                                                     string? token = "",
                                                                                     string incluirLotesDelProducto = "N")
         {
+            // Parámetros S/N/P/T sin distinguir mayúsculas
+            costos = Flag(costos);
+            imagenes = Flag(imagenes);
+            stock = Flag(stock);
+            publicaecommerce = Flag(publicaecommerce, "T");
+            aplicaciones = Flag(aplicaciones);
+            precios = Flag(precios, "S");
+            codigosadicionales = Flag(codigosadicionales);
+            definicionesporalmacen = Flag(definicionesporalmacen);
+            insumos = Flag(insumos);
+            impuestos = Flag(impuestos);
+            cuentas = Flag(cuentas);
+            elementos = Flag(elementos);
+            subproductos = Flag(subproductos);
+            soloproductospadre = Flag(soloproductospadre);
+            incluirSucursalesHabilitadas = Flag(incluirSucursalesHabilitadas);
+            incluirLotesDelProducto = Flag(incluirLotesDelProducto);
+
             cResponseProductos? oResponse = new cResponseProductos();
 
             List<string>? lstCodigosProducto = new List<string>();
@@ -774,7 +806,7 @@ namespace GESI.CORE.API.BLL.V3
                                                                             categoriasafiltrar,
                                                                             imagenes,
                                                                             stock,
-                                                                            null,
+                                                                            sesion?.Almacenes,
                                                                             (ushort?)FiltroEcommerce(publicaecommerce),
                                                                             strDevolverAplicaciones: aplicaciones,
                                                                             strDevolverCodigosAdicionales: codigosadicionales,
@@ -943,6 +975,19 @@ namespace GESI.CORE.API.BLL.V3
                                                                             string incluirExistenciasLotes = "N",
                                                                             string incluirSucursalesHabilitadas = "N")
         {
+            // Parámetros S/N/P sin distinguir mayúsculas
+            costos = Flag(costos);
+            imagenes = Flag(imagenes);
+            stock = Flag(stock);
+            insumos = Flag(insumos);
+            impuestos = Flag(impuestos);
+            cuentas = Flag(cuentas);
+            elementos = Flag(elementos);
+            subproductos = Flag(subproductos);
+            strIncluirExistenciasEnCero = Flag(strIncluirExistenciasEnCero);
+            incluirExistenciasLotes = Flag(incluirExistenciasLotes);
+            incluirSucursalesHabilitadas = Flag(incluirSucursalesHabilitadas);
+
             cResponseProducto oResponse = new cResponseProducto();
 
             Stopwatch stopwatch = new Stopwatch();
@@ -984,7 +1029,7 @@ namespace GESI.CORE.API.BLL.V3
                                                                             sesion?.EstadoProductos ,
                                                                             strDevolverExistencias: stock,
                                                                             strDevolverImagenes: imagenes,
-                                                                            intAAlmacenes: null,
+                                                                            intAAlmacenes: sesion?.Almacenes,
                                                                             strDevolverCuentasXProducto: cuentas,
                                                                             strDevolverElementosXEntidad: elementos, strDevolverSubProductos: subproductos, blnBlIncluirExistenciaAlmacenesEn0: (strIncluirExistenciasEnCero == "S"), blnBlIncluirExistenciasLotes: (incluirExistenciasLotes.Equals("S")), strDevolverSucursalesHabilitadas: incluirSucursalesHabilitadas);
 
@@ -1387,6 +1432,10 @@ namespace GESI.CORE.API.BLL.V3
 
                 if (productoID == null || productoID.Length == 0)
                     throw new cCodigoNoDetalladoException("No se especifico un ProductoID");
+
+                // El historial expone costos: exige permiso completo sobre costos
+                if (!VerificarPermisoSobreCostos(sesion.CostosXProveedor, "S"))
+                    throw new UnauthorizedAccessException("No contiene permisos para visualizar costos");
 
                 List<cCostoHistorico>? historialCostos = costosHistoricosBLL.GetList(productoID);
 

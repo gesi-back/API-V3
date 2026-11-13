@@ -35,6 +35,24 @@ namespace GESI.CORE.API.BLL.V3
             services.AddScoped<IProductosServicio, ProductosServicio>();
             services.AddScoped<ICanalesDeVentaServicio, CanalesDeVentaServicio>();
             services.AddScoped<ILoginServicio, LoginServicio>();
+            services.AddScoped<IAgentesServicio, AgentesServicio>();
+            services.AddScoped<IFormasDePagoServicio, FormasDePagoServicio>();
+            services.AddScoped<ICobradoresServicio, CobradoresServicio>();
+            services.AddScoped<IZonasServicio, ZonasServicio>();
+            services.AddScoped<IVendedoresServicio, VendedoresServicio>();
+            services.AddScoped<IPaisesServicio, PaisesServicio>();
+            services.AddScoped<IDivisasServicio, DivisasServicio>();
+            services.AddScoped<IRepartidoresServicio, RepartidoresServicio>();
+            services.AddScoped<IPuntosDeVentaServicio, PuntosDeVentaServicio>();
+            services.AddScoped<ITiposDeOperacionServicio, TiposDeOperacionServicio>();
+            services.AddScoped<ICategoriasComisionServicio, CategoriasComisionServicio>();
+            services.AddScoped<IAlmacenesServicio, AlmacenesServicio>();
+            services.AddScoped<IRubrosServicio, RubrosServicio>();
+            services.AddScoped<ISubRubrosServicio, SubRubrosServicio>();
+            services.AddScoped<ISubSubRubrosServicio, SubSubRubrosServicio>();
+            services.AddScoped<IFiltroArticulos1Servicio, FiltroArticulos1Servicio>();
+            services.AddScoped<IFiltroArticulos2Servicio, FiltroArticulos2Servicio>();
+            services.AddScoped<IFiltroArticulos3Servicio, FiltroArticulos3Servicio>();
             
 
 

@@ -3,7 +3,6 @@ using GESI.CORE.API.BO.V3;
 using GESI.CORE.V3.BLL;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json;
 using System.Net;
 using System.Security.Claims;
 using System.Text.Encodings.Web;
@@ -64,7 +63,7 @@ namespace API_con_Core_V3.Handler
             {
                 error = new cError((int)cCodigosError.cTokenInvalido, mensaje, ApiErrors.errInvalidToken)
             };
-            await Response.WriteAsync(JsonConvert.SerializeObject(oresp));
+            await Response.WriteAsJsonAsync(oresp);
         }
     }
 }
