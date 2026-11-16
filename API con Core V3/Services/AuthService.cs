@@ -1,4 +1,4 @@
-﻿using GESI.CORE.API.BLL.V3;
+﻿using GESI.CORE.API.BLL.V3.CORE;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;

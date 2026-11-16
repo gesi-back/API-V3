@@ -1,5 +1,6 @@
 ﻿using GESI.CORE.API.BLL.V3;
 using GESI.CORE.API.BO.V3;
+using GESI.CORE.API.BO.V3.API;
 using GESI.CORE.V3.BLL;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Options;

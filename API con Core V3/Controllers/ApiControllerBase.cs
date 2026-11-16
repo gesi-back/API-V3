@@ -1,5 +1,6 @@
 ﻿using GESI.CORE.API.BLL.V3;
-using GESI.CORE.API.BO.V3;
+using GESI.CORE.API.BLL.V3.CORE;
+using GESI.CORE.API.BO.V3.API;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using System.Net;

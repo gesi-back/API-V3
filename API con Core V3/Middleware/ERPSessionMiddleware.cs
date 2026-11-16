@@ -1,5 +1,7 @@
 ﻿using GESI.CORE.API.BLL.V3;
+using GESI.CORE.API.BLL.V3.CORE;
 using GESI.CORE.API.BO.V3;
+using GESI.CORE.API.BO.V3.API;
 using GESI.CORE.V3.BLL;
 using GESI.CORE.V3.BO;
 using GESI.ERP.Core.V3.BLL;
@@ -19,6 +21,14 @@ namespace API_con_Core_V3.Middleware
         public async Task InvokeAsync(HttpContext context, IApiSessionManager sesion,
                                       IAccesoApiServicio acceso, IApiLogger apiLogger)
         {
+
+            if(!context.Request.Headers.ContainsKey("GrupoESI"))
+            {
+                await ResponderError(context, HttpStatusCode.BadRequest, 0,
+                   $"No se encontró el encabezado GrupoESI en la solicitud");
+                return;
+            }
+
             // Login, RefreshToken y cualquier [AllowAnonymous]: sin sesión del ERP
             if (context.GetEndpoint()?.Metadata.GetMetadata<IAllowAnonymous>() is not null)
             {
@@ -111,9 +121,11 @@ namespace API_con_Core_V3.Middleware
                 correlationId: context.Items["CorrelationId"] as string,
                 remoteIP: context.Connection.RemoteIpAddress?.ToString(),
                 forwarded: ipPublica,
-                userAgent: agent,oAPIHabilitacion.CategoriasIDs, oAPIHabilitacion.CostosDeProveedor, oAPIHabilitacion.Estados, oAPIHabilitacion.ReleerPreciosAlImportarComprobantes, oAPIHabilitacion.AlmacenesIDs);
+                userAgent: agent,oAPIHabilitacion.CategoriasIDs, oAPIHabilitacion.CostosDeProveedor, oAPIHabilitacion.Estados, oAPIHabilitacion.ReleerPreciosAlImportarComprobantes, oAPIHabilitacion.AlmacenesIDs,
+                tiposDeClientes: oAPIHabilitacion.TiposDeCliente,
+                usuarioExterno: oAPIHabilitacion.UsuarioExterno);
 
-            // TODO: EvaluarMetodoSolicitud(context, sesion) — pasame qué validaba y lo agrego acá
+            
 
             await next(context);
         }

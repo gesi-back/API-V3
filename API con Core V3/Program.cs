@@ -18,7 +18,12 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
+// Igual que la V2: las propiedades string no anulables de las clases del Core (ej. dClavesComprobante.TipoEntidad)
+// no se vuelven obligatorias en los bodies; si no, MVC rechaza el request con "The X field is required"
+builder.Services.AddControllers(options =>
+{
+    options.SuppressImplicitRequiredAttributeForNonNullableReferenceTypes = true;
+});
 builder.Services.AddOpenApi();
 
 

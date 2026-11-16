@@ -41,7 +41,8 @@ namespace GESI.CORE.API.BLL.V3
         bool UsuarioExterno { get; }
 
         void Iniciar(int empresaID, int sucursalID, string usuario, string metodoAutenticacion,
-                     string? correlationId, string? remoteIP, string? forwarded, string? userAgent,string? categoriasIDs, string? costosxproveedor, string? estadoProductos, string releePreciosAlImportarComprobantes,string? almacenes);
+                     string? correlationId, string? remoteIP, string? forwarded, string? userAgent,string? categoriasIDs, string? costosxproveedor, string? estadoProductos, string releePreciosAlImportarComprobantes,string? almacenes,
+                     string? tiposDeClientes = null, bool usuarioExterno = false);
     }
 
     internal sealed class ApiSessionManager(SessionManagerAccessor accessor, IOptions<ApiSettings> config) : IApiSessionManager
@@ -77,7 +78,8 @@ namespace GESI.CORE.API.BLL.V3
 
 
         public void Iniciar(int empresaID, int sucursalID, string usuario, string metodoAutenticacion,
-                            string? correlationId, string? remoteIP, string? forwarded, string? userAgent,string? categoriasIDs,string? costosxproveedor,string? estadoProductos, string releePreciosAlImportarComprobantes, string? almacenes)
+                            string? correlationId, string? remoteIP, string? forwarded, string? userAgent,string? categoriasIDs,string? costosxproveedor,string? estadoProductos, string releePreciosAlImportarComprobantes, string? almacenes,
+                            string? tiposDeClientes = null, bool usuarioExterno = false)
         {
             accessor.Current = new SessionManager
             {
@@ -94,6 +96,10 @@ namespace GESI.CORE.API.BLL.V3
             Forwarded = forwarded ?? "";
             UserAgent = userAgent ?? "";
             CategoriasIDs = categoriasIDs;
+            // Restricción de la habilitación: la integración solo ve/graba clientes de estos tipos (null o vacío = todos)
+            TiposDeClientes = string.IsNullOrWhiteSpace(tiposDeClientes) ? null : tiposDeClientes;
+            // Igual que la V2: a un usuario externo se le exige CodigoDeImportacion al grabar comprobantes
+            UsuarioExterno = usuarioExterno;
             CostosXProveedor = costosxproveedor;
             EstadoProductos = estadoProductos;
             ReleePreciosAlImportarComprobantes = releePreciosAlImportarComprobantes;

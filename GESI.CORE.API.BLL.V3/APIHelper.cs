@@ -1,4 +1,6 @@
-﻿using GESI.CORE.API.BO.V3;
+﻿using GESI.CORE.API.BLL.V3.CORE;
+using GESI.CORE.API.BO.V3;
+using GESI.CORE.API.BO.V3.API;
 using GESI.ERP.Core.V3.BLL;
 using GESI.ERP.Core.V3.BO;
 using Microsoft.Data.SqlClient;
@@ -542,7 +544,7 @@ namespace GESI.CORE.API.BLL.V3
                 => $"{Base}/Ingresos/{accion}";
 
             public static string Ajustes(string accion)
-                => $"{Base}/Ingresos/{accion}";
+                => $"{Base}/Ajustes/{accion}";
 
             public static string Egresos(string accion)
                 => $"{Base}/Egresos/{accion}";
@@ -554,7 +556,7 @@ namespace GESI.CORE.API.BLL.V3
                 => $"{Base}/TomaDeInventario/{accion}";
 
             public static string Configuraciones(string accion)
-               => $"{Base}/Configuraciones/{accion}";
+               => $"{Api}/Stock/Configuraciones/{accion}";
         }
 
         // ========================
@@ -578,6 +580,9 @@ namespace GESI.CORE.API.BLL.V3
 
             public static string Facturas(string accion)
                => $"{Base}/Facturas/{accion}";
+
+            public static string Remitos(string accion)
+               => $"{Base}/Remitos/{accion}";
         }
 
         public static class Repartos

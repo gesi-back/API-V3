@@ -1,4 +1,5 @@
-using GESI.CORE.API.BO.V3;
+using GESI.CORE.API.BLL.V3.CORE;
+using GESI.CORE.API.BO.V3.API;
 using System.Diagnostics;
 
 namespace GESI.CORE.API.BLL.V3
@@ -14,6 +15,9 @@ namespace GESI.CORE.API.BLL.V3
 
         /// <summary>Logger de la API, para logs que no son el informativo estándar.</summary>
         protected IApiLogger Logger => apiLogger;
+
+        /// <summary>Helper de la API (paginación por códigos, tamaño de página, etc.).</summary>
+        protected IAPIHelper ApiHelper => apiHelper;
 
         /// <summary>
         /// Obtiene la lista completa, la pagina en memoria y arma la respuesta con el mismo contrato de la V2:

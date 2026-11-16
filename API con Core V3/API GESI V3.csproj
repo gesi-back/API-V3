@@ -20,6 +20,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Reference Include="GESI.Contabilidad.V3.BO">
+      <HintPath>..\..\..\VersCom.Net\DLL Core V3\GESI.Contabilidad.V3.BO.dll</HintPath>
+    </Reference>
     <Reference Include="GESI.CORE.V3.BLL">
       <HintPath>I:\Desarrollo\VersCom.Net\DLL Core V3\GESI.CORE.V3.BLL.dll</HintPath>
     </Reference>
@@ -50,6 +53,18 @@
     <Reference Include="GESI.ERP.Ventas.V3.BLL">
       <HintPath>I:\Desarrollo\VersCom.Net\DLL Core V3\GESI.ERP.Ventas.V3.BLL.dll</HintPath>
     </Reference>
+    <Reference Include="GESI.ERP.Stock.V3.BO">
+      <HintPath>I:\Desarrollo\VersCom.Net\DLL Core V3\GESI.ERP.Stock.V3.BO.dll</HintPath>
+    </Reference>
+    <Reference Include="GESI.ERP.Compras.V3.BO">
+      <HintPath>I:\Desarrollo\VersCom.Net\DLL Core V3\GESI.ERP.Compras.V3.BO.dll</HintPath>
+    </Reference>
+    <Reference Include="GESI.ERP.Ventas.V3.BO">
+      <HintPath>I:\Desarrollo\VersCom.Net\DLL Core V3\GESI.ERP.Ventas.V3.BO.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
   </ItemGroup>
 
 </Project>
