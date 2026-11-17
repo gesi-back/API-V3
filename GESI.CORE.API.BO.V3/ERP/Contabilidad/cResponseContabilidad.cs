@@ -122,4 +122,41 @@ namespace GESI.CORE.API.BO.V3.ERP.Contabilidad
         /// </summary>
         public cPaginacion? paginacion { get; set; }
     }
+
+    /// <summary>
+    /// Respuesta del Create / Update de una cuenta contable (mismo JSON que la V2)
+    /// </summary>
+    public class cResponseCuenta : cResponse
+    {
+        /// <summary>
+        /// Cuenta grabada
+        /// </summary>
+        public cCuenta? cuenta { get; set; }
+
+        /// <summary>
+        /// Paginacion del resultado
+        /// </summary>
+        public cPaginacion? paginacion { get; set; }
+
+        /// <summary>
+        /// Motivo cuando el Core rechaza la grabación
+        /// </summary>
+        public string? message { get; set; }
+    }
+
+    /// <summary>
+    /// Respuesta del Create de un asiento (mismo JSON que la V2)
+    /// </summary>
+    public class cResponseSaveAsiento : cResponse
+    {
+        /// <summary>
+        /// Asiento grabado (igual que la V2, no se completa)
+        /// </summary>
+        public cAsiento? asiento { get; set; }
+
+        /// <summary>
+        /// "OK" si se grabó, o el motivo cuando el Core lo rechaza
+        /// </summary>
+        public string? message { get; set; }
+    }
 }

@@ -10,12 +10,11 @@ namespace GESI.CORE.API.BLL.V3.ERP.Contabilidad
     public interface IAsientosServicio
     {
         cResponseAsientos GetList(int ejercicioID, int pageNumber, int pageSize);
+        cResponseSaveAsiento Save(cAsiento? oAsiento);
     }
 
     /// <summary>
     /// Migrado de la V2 (BLL.AsientosMgr estático con MiApiSessionManager estático).
-    /// PENDIENTE: la V2 tenía Create (Contable.AsientosManager.Save), pero en el Core V3 ya no existe
-    /// ese manager ni su cAsiento, así que ese endpoint no se migró.
     /// </summary>
     internal sealed class AsientosServicio(
         IAsientosBLL asientosBLL,
@@ -39,7 +38,7 @@ namespace GESI.CORE.API.BLL.V3.ERP.Contabilidad
 
             // NUEVO respecto de la V2: se respeta el tamaño máximo de página de la habilitación
             pageSize = ApiHelper.DevolverTamanoPaginacion(Sesion.TamanoPagina, pageSize);
-
+            
             try
             {
                 List<cAsiento>? lstAsientos = asientosBLL.GetList((byte)ejercicioID);
@@ -75,6 +74,67 @@ namespace GESI.CORE.API.BLL.V3.ERP.Contabilidad
                 oRespuesta.error = new cError((int)cCodigosError.cDatosNoEncontrados, mensaje.Message, ApiErrors.errDatosNoEncontrados);
                 oRespuesta.success = true;
 
+                return oRespuesta;
+            }
+        }
+
+        /// <summary>
+        /// Graba un asiento contable con su detalle.
+        /// Igual que la V2: success = lo que devuelve el Core; si hay errores van en error (200), si no message = "OK".
+        /// </summary>
+        public cResponseSaveAsiento Save(cAsiento? oAsiento)
+        {
+            Stopwatch stopwatch = Stopwatch.StartNew();
+            cResponseSaveAsiento oRespuesta = new cResponseSaveAsiento();
+
+            // NUEVO respecto de la V2: sin asiento devuelve 400 (la V2 fallaba adentro del Core y devolvía 200 con el mensaje)
+            if (oAsiento == null)
+                throw new cCodigoNoDetalladoException("No se especificó el asiento a grabar");   // → 400
+
+            // NUEVO respecto de la V2: el asiento y su detalle se graban en la empresa de la sesión
+            // (la V2 grababa con la EmpresaID que viniera en el body)
+            oAsiento.EmpresaID = (short)Sesion.EmpresaID;
+
+            if (oAsiento.Detalle != null)
+            {
+                foreach (cDetalleAsiento oDetalle in oAsiento.Detalle)
+                {
+                    oDetalle.EmpresaID = (short)Sesion.EmpresaID;
+                }
+            }
+
+            string strEndpoint = Endpoint.Contabilidad.Asientos("Create");
+
+            try
+            {
+                (bool blRet, List<string>? lstErrores) = asientosBLL.Save(oAsiento);
+
+                oRespuesta.success = blRet;
+
+                if (lstErrores?.Count > 0)
+                    oRespuesta.error = new cError((int)cCodigosError.cErrorConversionDato, string.Join(",", lstErrores), ApiErrors.errJsonInvalido);
+                else
+                    oRespuesta.message = "OK";
+
+                LoguearInfo("Asientos Create Resultado:" + blRet + (lstErrores?.Count > 0 ? " Errores: " + string.Join(",", lstErrores) : ""),
+                            strEndpoint, stopwatch, 1, 1, 1);
+
+                return oRespuesta;
+            }
+            catch (Exception ex)
+            {
+                // Las BLL del Core envuelven los errores en ApplicationException: el motivo real está en InnerException
+                Exception real = ex is ApplicationException && ex.InnerException != null ? ex.InnerException : ex;
+
+                // NUEVO respecto de la V2: un error de base de datos responde 500 (la V2 devolvía 200 con el detalle técnico en message)
+                if (real is Microsoft.Data.SqlClient.SqlException)
+                    throw;
+
+                // Igual que la V2: el rechazo del Core vuelve en message con success = false
+                Logger.LoguearSucesosAPI("Asiento no grabado | " + real.Message, tTiposDeError.tError,
+                                         Sesion.Usuario, strEndpoint, Sesion.EmpresaID, Sesion.SucursalID);
+
+                oRespuesta.message = real.Message;
                 return oRespuesta;
             }
         }

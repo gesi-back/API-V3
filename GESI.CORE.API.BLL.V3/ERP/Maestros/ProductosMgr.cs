@@ -113,6 +113,8 @@ namespace GESI.CORE.API.BLL.V3.ERP.Maestros
         cConfiguraciones GetConfiguraciones(string seccionID = "", string itemID = "");
 
         List<dActualizacionCostoProductoProveedorResponse> ActualizacionCostosPorProveedor(List<cActualizacionCosto>? lstCostos, bool blnAgregarFaltantes);
+
+        List<cResponseProductosSave> SavePartial(List<GESI.ERP.Core.V3.BO.cProducto>? lstProductos);
     }
 
     internal sealed class ProductosServicio(
@@ -1787,6 +1789,98 @@ namespace GESI.CORE.API.BLL.V3.ERP.Maestros
             }
 
             return lstCostoProducto;
+        }
+
+
+        /// <summary>
+        /// Actualiza productos en Lote
+        /// </summary>
+        /// <param name="lstProductos"></param>
+        /// <returns></returns>
+        public List<cResponseProductosSave> SavePartial(List<GESI.ERP.Core.V3.BO.cProducto>? lstProductos)
+        {
+            #region Timers
+            Stopwatch stopwatch = new Stopwatch();
+            stopwatch.Start();
+            #endregion
+
+            List<cResponseProductosSave> oResponse = new List<cResponseProductosSave>();
+
+            try
+            {
+                if (lstProductos == null || lstProductos.Count == 0)
+                    throw new cCodigoNoDetalladoException("No se encontraron productos a editar");
+
+                if (lstProductos.Count > 10)
+                    throw new ArgumentOutOfRangeException("Se permite un maximo de 10 productos por llamada");
+
+                lstProductos.ForEach(x => x.EmpresaID = (short)(sesion?.EmpresaID ?? 0));               
+
+                string strMensajes = "";
+
+                bool FueEditado = false;
+                int i = 1;
+                foreach (GESI.ERP.Core.V3.BO.cProducto oProductoACrear in lstProductos)
+                {
+                    FueEditado = false;
+                    cResponseProductosSave oRespuesta = new cResponseProductosSave();
+                    try
+                    {
+                        GESI.ERP.Core.V3.BO.cProducto? oProductoCreado = productosBLL.Save(oProductoACrear, out strMensajes);
+                        FueEditado = true;
+                        oRespuesta = new cResponseProductosSave(FueEditado, oProductoACrear.ProductoID,
+                                                                                        oProductoACrear.Descripcion, "",
+                                                                                        oProductoACrear.Estado,
+                                                                                        oProductoACrear.AlicuotaIVA, i);
+
+
+
+                    }
+                    catch (SqlException sex)
+                    {
+                        oRespuesta = new cResponseProductosSave(FueEditado, oProductoACrear.ProductoID,
+                                                                                        oProductoACrear.Descripcion,
+                                                                                        sex.Message,
+                                                                                        oProductoACrear.Estado,
+                                                                                        oProductoACrear.AlicuotaIVA, i);
+
+                        oRespuesta.error = APIHelper.GenerarMensajePersonalizadoPorErrorExcepcion(sex);
+
+                    }
+                    catch (Exception ex)
+                    {
+                        oRespuesta = new cResponseProductosSave(FueEditado, oProductoACrear.ProductoID,
+                                                                                        oProductoACrear.Descripcion,
+                                                                                        ex.Message,
+                                                                                        oProductoACrear.Estado,
+                                                                                        oProductoACrear.AlicuotaIVA, i);
+
+                        oRespuesta.error = APIHelper.GenerarMensajePersonalizadoPorErrorExcepcion(ex);
+
+                    }
+                    i++;
+                    oResponse.Add(oRespuesta);
+                }
+
+                return oResponse;
+
+            }
+            catch (ArgumentOutOfRangeException intex)
+            {
+                cResponseProductosSave oRespuesta = new cResponseProductosSave(false, "", "", intex.Message, "", 0, 0);
+                oRespuesta.error = APIHelper.GenerarMensajePersonalizadoPorErrorExcepcion(intex);
+                oResponse.Add(oRespuesta);
+                stopwatch.Stop();
+                return oResponse;
+            }
+            catch (cCodigoNoDetalladoException cex)
+            {
+                cResponseProductosSave oRespuesta = new cResponseProductosSave(false, "", "", cex.Message, "", 0, 0);
+                oRespuesta.error = APIHelper.GenerarMensajePersonalizadoPorErrorExcepcion(cex);
+                oResponse.Add(oRespuesta);
+                stopwatch.Stop();
+                return oResponse;
+            }
         }
 
     }

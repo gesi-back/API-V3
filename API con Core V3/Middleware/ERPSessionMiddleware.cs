@@ -21,7 +21,6 @@ namespace API_con_Core_V3.Middleware
         public async Task InvokeAsync(HttpContext context, IApiSessionManager sesion,
                                       IAccesoApiServicio acceso, IApiLogger apiLogger)
         {
-
             if(!context.Request.Headers.ContainsKey("GrupoESI"))
             {
                 await ResponderError(context, HttpStatusCode.BadRequest, 0,

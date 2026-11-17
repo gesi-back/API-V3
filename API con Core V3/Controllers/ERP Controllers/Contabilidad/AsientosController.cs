@@ -1,13 +1,13 @@
 using GESI.CORE.API.BLL.V3;
 using GESI.CORE.API.BLL.V3.ERP.Contabilidad;
 using GESI.CORE.API.BO.V3.ERP.Contabilidad;
+using GESI.Contabilidad.V3.BO;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API_con_Core_V3.Controllers
 {
     /// <summary>
-    /// Controlador de asientos contables.
-    /// PENDIENTE: Create de la V2 no se migró porque el Core V3 ya no tiene Contable.AsientosManager.Save.
+    /// Controlador de asientos contables
     /// </summary>
     [ApiController]
     [Route("api/Maestros/Contabilidad/[controller]")]
@@ -25,5 +25,12 @@ namespace API_con_Core_V3.Controllers
                                                        int pageNumber = (int)pPaginacionValoresPredeterminados.pPageNumber,
                                                        int pageSize = (int)pPaginacionValoresPredeterminados.pPageSize)
             => Responder(() => AsientosMgr.GetList(ejercicioID, pageNumber, pageSize));
+
+        /// <summary>
+        /// Graba un asiento contable con su detalle
+        /// </summary>
+        [HttpPost("Create")]
+        public ActionResult<cResponseSaveAsiento> Create([FromBody] cAsiento? oAsiento)
+            => Responder(() => AsientosMgr.Save(oAsiento));
     }
 }

@@ -13,12 +13,11 @@ namespace GESI.CORE.API.BLL.V3.ERP.Contabilidad
     {
         cResponseCuentas GetList(int ejercicioID, int pageNumber, int pageSize);
         cResponse Delete(int ejercicioID, string? cuentaID);
+        cResponseCuenta Save(cCuenta? oCuenta, bool blAlta = false);
     }
 
     /// <summary>
     /// Migrado de la V2 (BLL.CuentasMgr estático con MiApiSessionManager estático).
-    /// PENDIENTE: la V2 tenía Create/Update (CuentasManager.Save), pero el ICuentasBLL del Core V3
-    /// no tiene Save, así que esos dos endpoints no se migraron.
     /// </summary>
     internal sealed class CuentasServicio(
         ICuentasBLL cuentasBLL,
@@ -102,6 +101,54 @@ namespace GESI.CORE.API.BLL.V3.ERP.Contabilidad
             LoguearInfo("Success Cuentas Delete cuentaID: " + cuentaID, Endpoint.Contabilidad.Cuentas("Delete"), stopwatch, cantidadRegistros, 1, cantidadRegistros);
 
             return new cResponse { success = true };
+        }
+
+        /// <summary>
+        /// Crea (blAlta = true) o modifica una cuenta contable.
+        /// Igual que la V2: si el Core rechaza la grabación responde 200 con success = false y el motivo en message.
+        /// </summary>
+        public cResponseCuenta Save(cCuenta? oCuenta, bool blAlta = false)
+        {
+            Stopwatch stopwatch = Stopwatch.StartNew();
+            cResponseCuenta oRespuesta = new cResponseCuenta();
+
+            // NUEVO respecto de la V2: sin cuenta, o modificación sin CuentaID, devuelve 400 (la V2 devolvía 200 con el mensaje)
+            if (oCuenta == null)
+                throw new cCodigoNoDetalladoException("No se especificó el objeto cuenta");   // → 400
+
+            if (!blAlta && string.IsNullOrEmpty(oCuenta.CuentaID))
+                throw new cCodigoNoDetalladoException("No se especifico la cuentaID para la edicion de la cuenta");   // → 400
+
+            // Igual que la V2: la cuenta se graba en la empresa de la sesión
+            oCuenta.EmpresaID = (short)Sesion.EmpresaID;
+
+            string strEndpoint = Endpoint.Contabilidad.Cuentas(blAlta ? "Create" : "Update");
+
+            try
+            {
+                oRespuesta.cuenta = cuentasBLL.Save(oCuenta);
+                oRespuesta.success = true;
+
+                LoguearInfo("Success Cuentas " + (blAlta ? "Create" : "Update") + " cuentaID: " + oCuenta.CuentaID, strEndpoint, stopwatch, 1, 1, 1);
+
+                return oRespuesta;
+            }
+            catch (Exception ex)
+            {
+                // Las BLL del Core envuelven los errores en ApplicationException: el motivo real está en InnerException
+                Exception real = ex is ApplicationException && ex.InnerException != null ? ex.InnerException : ex;
+
+                // NUEVO respecto de la V2: un error de base de datos responde 500 (la V2 devolvía 200 con el detalle técnico en message)
+                if (real is Microsoft.Data.SqlClient.SqlException)
+                    throw;
+
+                // Igual que la V2: el rechazo del Core vuelve en message con success = false
+                Logger.LoguearSucesosAPI("Cuenta no grabada cuentaID: " + oCuenta.CuentaID + " | " + real.Message, tTiposDeError.tError,
+                                         Sesion.Usuario, strEndpoint, Sesion.EmpresaID, Sesion.SucursalID);
+
+                oRespuesta.message = real.Message;
+                return oRespuesta;
+            }
         }
     }
 }
