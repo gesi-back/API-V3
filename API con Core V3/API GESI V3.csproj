@@ -35,8 +35,14 @@
     <Reference Include="GESI.CORE.V3.DAL">
       <HintPath>I:\Desarrollo\VersCom.Net\DLL Core V3\GESI.CORE.V3.DAL.dll</HintPath>
     </Reference>
+    <Reference Include="GESI.CORE.V3.SEC">
+      <HintPath>..\..\..\VersCom.Net\DLL Core V3\GESI.CORE.V3.SEC.dll</HintPath>
+    </Reference>
     <Reference Include="GESI.CORE.V3.Test.Consola">
       <HintPath>I:\Desarrollo\VersCom.Net\DLL Core V3\GESI.CORE.V3.Test.Consola.dll</HintPath>
+    </Reference>
+    <Reference Include="GESI.CORE.V3.Utilidades">
+      <HintPath>..\..\..\VersCom.Net\DLL Core V3\GESI.CORE.V3.Utilidades.dll</HintPath>
     </Reference>
     <Reference Include="GESI.ERP.Compras.V3.BLL">
       <HintPath>I:\Desarrollo\VersCom.Net\DLL Core V3\GESI.ERP.Compras.V3.BLL.dll</HintPath>

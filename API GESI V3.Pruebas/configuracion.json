@@ -1,0 +1,82 @@
+// Configuración del ejecutable de pruebas.
+// OJO: tiene usuario y contraseña; no subas tus credenciales reales al repositorio.
+{
+  "UrlV3": "http://localhost:5015",
+  "UrlV2": "", // vacío = no compara. Con la URL de la V2 manda cada lectura a las dos y compara los JSON
+  "GrupoESI": "", // valor del encabezado GrupoESI
+  "Usuario": "gesi",
+  "Password": "1802",
+  "ApiKey": "", // si se completa, se usa en lugar de usuario/contraseña (encabezado GrupoESI-ApiKey)
+  "EmpresaID": "", // opcional: encabezado empresaID
+  "SucursalID": "", // opcional: encabezado sucursalID
+
+  "EjecutarEscrituras": false, // true = ejecuta Create/Update/Delete (solo en la V3). Usar en una base de prueba
+  "AceptarCertificadosInvalidos": true, // para https con certificados de desarrollo
+  "TimeoutSegundos": 100,
+
+  // Campos que no se comparan con la V2 (por nombre, ej. "fechaAlta", o por ruta, ej. "$.paginacion.tiempo")
+  "CamposIgnorados": [],
+
+  // Valores que reemplazan los {{Nombre}} de pruebas.json. Vacío o null = la prueba que lo usa se omite.
+  "Valores": {
+    "PageSize": 10,
+    "FechaDesde": "2026-01-01",
+    "FechaHasta": "2026-12-31",
+    "Expresion": "a", // texto para los GetSearchResults
+
+    // Maestros
+    "EmpresaID": "",
+    "AlmacenID": "",
+    "CajaBancoID": "",
+    "CanalDeVentaID": "",
+    "ClienteID": "",
+    "ComprobanteID": "",
+    "ClaseDeComprobanteID": "",
+    "EjercicioID": "",
+    "FormaDePagoID": "",
+    "FormaDePagoProveedorID": "",
+    "GrupoDeProductosID": "",
+    "MedioDePagoID": "",
+    "PaisID": "",
+    "ProductoID": "",
+    "ProveedorID": "",
+    "PuntoDeVentaID": "",
+    "ReferenciaContableID": "",
+    "RepartidorID": "",
+    "TipoDeOperacionID": "",
+    "VendedorID": "",
+    "AplicacionID": "",
+    "AccesoID": "",
+    "UsuarioID": "",
+    "FojaID": "",
+
+    // Claves de comprobantes para los GetItem. Se escriben como objeto, por ejemplo:
+    //   Ventas:       { "empresaID": 1, "comprobanteID": 1, "serie": "A", "puntoDeVentaID": 1, "numero": 123 }
+    //   Compras/Stock: { "empresaID": 1, "comprobanteID": 1, "serie": "A", "puntoDeVentaID": 1, "numero": 123, "tipoEntidad": "", "entidadID": 0 }
+    "ClaveAcopio": null,
+    "ClaveCobro": null,
+    "ClaveFactura": null,
+    "ClaveNotaDeCredito": null,
+    "ClavePedido": null,
+    "ClavePresupuesto": null,
+    "ClaveRemito": null,
+    "ClaveFacturaCompra": null,
+    "ClaveNotaDeCreditoCompra": null,
+    "ClaveNotaDeDebitoCompra": null,
+    "ClaveOrdenDeCompra": null,
+    "ClaveOrdenDePago": null,
+    "ClaveRemitoCompra": null,
+    "ClaveAjuste": null,
+    "ClaveEgreso": null,
+    "ClaveIngreso": null,
+    "ClaveTomaDeInventario": null,
+    "ClaveTransferencia": null,
+
+    // Repartos CompararProductos: el body completo, ej. { "productos": [ ... ] }
+    "ProductosAComparar": null,
+
+    // Escrituras (solo con EjecutarEscrituras = true)
+    "IDPrueba": 9999,                    // código que usan los ciclos ABM (tiene que estar libre en la base)
+    "EstadoID": ""
+  }
+}

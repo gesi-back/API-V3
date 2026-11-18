@@ -260,7 +260,7 @@ namespace API_con_Core_V3.Controllers
         /// Crea productos en el ERP (máximo 10 por llamada).
         /// Igual que la V2: devuelve un resultado por producto; lista vacía o más de 10 → 200 con el error en el único ítem.
         /// </summary>
-        [HttpPost("update-partial")]
+        [HttpPatch("update-partial")]
         public ActionResult<List<cResponseProductosSave>> UpdatePartial([FromBody] List<GESI.ERP.Core.V3.BO.cProducto>? lstProductos)
             => ResponderLista(() => productoServicio.SavePartial(lstProductos),
                               error => new cResponseProductosSave(false, "", "", error.message ?? "", "", 0, 0) { error = error });

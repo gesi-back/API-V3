@@ -1,9 +1,13 @@
+using FluentFTP;
 using GESI.CORE.API.BLL.V3.CORE;
 using GESI.CORE.API.BO.V3.API;
 using GESI.CORE.API.BO.V3.ERP.Ventas;
+using GESI.CORE.V3.BLL;
+using GESI.ERP.Core.V3.BLL;
+using GESI.ERP.Core.V3.BO;
 using GESI.ERP.Core.V3.BO.Dinamicos;
-using GESI.ERP.Ventas.V3.BLL;
 using GESI.ERP.Finanzas.V3.BO;
+using GESI.ERP.Ventas.V3.BLL;
 using GESI.ERP.Ventas.V3.BO;
 using Newtonsoft.Json;
 using System.Diagnostics;
@@ -42,6 +46,8 @@ namespace GESI.CORE.API.BLL.V3.ERP.Ventas
         List<cMovimientoDeCliente>? LeerComprobantesDePedido(string json);
 
         List<cComprobanteCobro>? LeerComprobantesDeCobro(string json);
+
+        Task<List<cPDFComprobante>> DevolverJSONPDF(List<dClavesComprobante>? lstClaves, string subTipo);
     }
 
     /// <summary>
@@ -51,7 +57,7 @@ namespace GESI.CORE.API.BLL.V3.ERP.Ventas
     ///
     /// ETAPA 1: consultas (GetItem, GetList) y SetearEstado.
     /// ETAPA 2: grabaciones (SaveComprobanteDeVenta, SaveComprobanteDeCobro, conversores de la API vieja, SaveAplicacionesSaldos).
-    /// PENDIENTE (etapa 3): DevolverJSONPDF.
+    /// ETAPA 3: DevolverJSONPDF (links a los PDF del FTP).
     /// </summary>
     internal sealed class MovimientosDeClientesServicio(
         IComprobanteDeVentaBLL comprobanteDeVentaBLL,
@@ -60,7 +66,9 @@ namespace GESI.CORE.API.BLL.V3.ERP.Ventas
         IRelacionesComprobantesBLL relacionesComprobantesBLL,
         IAPIHelper apiHelper,
         IApiSessionManager sesion,
-        IApiLogger apiLogger) : ServicioBase(apiHelper, sesion, apiLogger), IMovimientosDeClientesServicio
+        IApiLogger apiLogger,
+        IConfiguracionBaseBLL configuracionesBLL,
+        IEmpresasBLL empresasBLL) : ServicioBase(apiHelper, sesion, apiLogger), IMovimientosDeClientesServicio
     {
         // Igual que la V2: un solo Save a la vez por tipo de comprobante, para que dos requests simultáneos no se pisen la numeración
         private static readonly object _lockPedidos = new object();
@@ -907,6 +915,184 @@ namespace GESI.CORE.API.BLL.V3.ERP.Ventas
             }
 
             return lstComprobantesCobro;
+        }
+
+
+        /// <summary>
+        /// Devuelve el archivo PDF en base 64
+        /// </summary>
+        /// <param name="lstClaves"></param>
+        /// <returns></returns>
+        public async Task<List<cPDFComprobante>> DevolverJSONPDF(List<GESI.ERP.Core.V3.BO.Dinamicos.dClavesComprobante>? lstClaves, string subTipo)
+        {
+            List<cPDFComprobante> lstRespuesta = new List<cPDFComprobante>();
+            try
+            {
+
+                if (lstClaves == null || lstClaves.Count == 0)
+                    throw new ApplicationException("No se encontraron claves de comprobante");
+
+                if (lstClaves.Count > 5)
+                    throw new ApplicationException("Cantidad de comprobantes superada. El limite son 5");
+
+                // NUEVO respecto de la V2: se fuerza la empresa de la sesión, igual que en GetItem
+                // (la V2 buscaba con la EmpresaID del body y el PDF en la carpeta FTP de la empresa de la sesión)
+                lstClaves.ForEach(x => x.EmpresaID = Sesion.EmpresaID);
+
+                string? strServidor = configuracionesBLL.GetValorConfiguracionBase("Configuracion", "FTPPDFs", "Server");
+                string? strUsuario = configuracionesBLL.GetValorConfiguracionBase("Configuracion", "FTPPDFs", "Usuario");
+                string? strPassword = configuracionesBLL.GetValorConfiguracionBase("Configuracion", "FTPPDFs", "Password");
+                
+                strPassword = GESI.CORE.V3.SEC.Seguridad.DesencriptarTexto(strPassword);
+
+                string? strDominioDePdfs = configuracionesBLL.GetValorConfiguracionBase("Configuracion", "FTPPDFs", "Dominio");
+
+                if (string.IsNullOrEmpty(strServidor) ||
+                    string.IsNullOrEmpty(strUsuario) ||
+                    string.IsNullOrEmpty(strPassword) ||
+                    string.IsNullOrEmpty(strDominioDePdfs))
+                    throw new ApplicationException("No se encontraron las configuraciones internas al FTP (Credenciales de acceso)");
+
+                cEmpresa oEmpresa = empresasBLL.GetItem(Sesion.EmpresaID);
+
+                if (string.IsNullOrEmpty(oEmpresa.PDFComprobantesCarpetaDestinoFTP))
+                    throw new ApplicationException("No se encontraron las configuraciones internas al FTP (Carpeta FTP)");
+
+                List<GESI.ERP.Ventas.V3.BO.cComprobanteVenta>? lstComprobantesDeVenta = comprobanteDeVentaBLL.GetItemsByIDs(ConvertirAClavesComprobante(lstClaves));
+
+                if (lstComprobantesDeVenta == null)
+                    throw new ApplicationException("No se encontraron los comprobantes detallados en la solicitud");
+
+
+                using var cliente = new AsyncFtpClient(
+                                        strServidor,
+                                        strUsuario,
+                                        strPassword);
+
+                await cliente.Connect();
+
+                foreach (GESI.ERP.Core.V3.BO.Dinamicos.dClavesComprobante oClave in lstClaves)
+                {
+                    cPDFComprobante oPDFADevolver = new cPDFComprobante();
+
+                    GESI.ERP.Ventas.V3.BO.cComprobanteVenta? oComprobante = lstComprobantesDeVenta.FirstOrDefault(x => x.EmpresaID == oClave.EmpresaID && x.PuntoDeVentaID == oClave.PuntoDeVentaID && x.Serie == oClave.Serie && x.Numero == oClave.Numero && x.ComprobanteID == oClave.ComprobanteID);
+
+                    if (oComprobante == null)
+                    {
+                        oPDFADevolver.success = false;
+                        oPDFADevolver.error = new cError((int)cCodigosError.cDatosNoEncontrados, "No se encontró el comprobante en el ERP, reintente nuevamente", ApiErrors.errDatosNoEncontrados);
+                        lstRespuesta.Add(oPDFADevolver);
+                        continue;
+                    }
+
+
+                    string prefijo = "";
+                    if (oClave.EntidadID <= 0)
+                        prefijo = subTipo + "-" + oClave.Serie + "-" + oClave.PuntoDeVentaID.ToString("D4") + "-" + oClave.Numero.ToString("D8");
+                    else
+                        prefijo = subTipo + "-" + oClave.Serie + "-" + oClave.PuntoDeVentaID.ToString("D4") + "-" + oClave.Numero.ToString("D8") + "-" + oClave.EntidadID.ToString("D6");
+
+
+                    string directorio = "/" + oEmpresa.PDFComprobantesCarpetaDestinoFTP;
+
+                    cPDFComprobante? oPDFDevuelto = await DevolverPDFComprobante(directorio, cliente, prefijo, strDominioDePdfs, oEmpresa.PDFComprobantesCarpetaDestinoFTP);
+
+                    if (oPDFDevuelto != null)
+                    {
+                        lstRespuesta.Add(oPDFDevuelto);
+                        continue;
+                    }
+
+                    if (oClave.EntidadID <= 0)
+                        prefijo = subTipo + "-CR-" + oClave.Serie + "-" + oClave.PuntoDeVentaID.ToString("D4") + "-" + oClave.Numero.ToString("D8");
+                    else
+                        prefijo = subTipo + "-CR-" + oClave.Serie + "-" + oClave.PuntoDeVentaID.ToString("D4") + "-" + oClave.Numero.ToString("D8") + "-" + oClave.EntidadID.ToString("D6");
+
+                    oPDFDevuelto = await DevolverPDFComprobante(directorio, cliente, prefijo, strDominioDePdfs, oEmpresa.PDFComprobantesCarpetaDestinoFTP);
+
+                    if (oPDFDevuelto != null)
+                    {
+                        lstRespuesta.Add(oPDFDevuelto);
+                        continue;
+                    }
+                    else
+                    {
+                        oPDFADevolver.success = false;
+                        oPDFADevolver.error = new cError((int)cCodigosError.cDatosNoEncontrados, "No se encontró el PDF en el servidor, reintente nuevamente", ApiErrors.errDatosNoEncontrados);
+                        lstRespuesta.Add(oPDFADevolver);
+                    }
+
+
+                }
+            }
+            catch (ApplicationException app)
+            {
+                cPDFComprobante oPdf = new cPDFComprobante();
+                oPdf.error = new cError(400, app.Message, ApiErrors.errInternalServerError);
+
+                lstRespuesta.Add(oPdf);
+            }
+            catch (Exception ex)
+            {
+                cPDFComprobante oPdf = new cPDFComprobante();
+                oPdf.error = new cError(500, ex.Message, ApiErrors.errInternalServerError);
+
+                lstRespuesta.Add(oPdf);
+            }
+
+            return lstRespuesta;
+        }
+
+        /// <summary>
+        /// Busca el pdf dentro del FTP
+        /// </summary>
+        /// <param name="directorio"></param>
+        /// <param name="cliente"></param>
+        /// <param name="prefijo"></param>
+        /// <param name="strDominioDePdfs"></param>
+        /// <param name="CarpetaDestinoPDF"></param>
+        /// <returns></returns>
+        private async Task<cPDFComprobante?> DevolverPDFComprobante(string directorio,
+                                                                    AsyncFtpClient cliente,
+                                                                    string prefijo,
+                                                                    string strDominioDePdfs,
+                                                                    string CarpetaDestinoPDF)
+        {
+            cPDFComprobante? oPDFADevolver = null;
+
+            FtpListItem[] archivos = await cliente.GetListing(directorio);
+            var archivo = archivos.FirstOrDefault(x =>
+                            x.Type == FtpObjectType.File &&
+                            x.Name.StartsWith(prefijo, StringComparison.OrdinalIgnoreCase) &&
+                            x.Name.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase));
+
+            if (archivo != null)
+            {
+                oPDFADevolver = new cPDFComprobante();
+                oPDFADevolver.success = true;
+                oPDFADevolver.url = strDominioDePdfs + "/" + CarpetaDestinoPDF + "/" + archivo.Name;
+            }
+
+            return oPDFADevolver;
+        }
+
+
+        private List<GESI.ERP.Ventas.V3.BO.dClaveComprobanteDeVenta> ConvertirAClavesComprobante(List<GESI.ERP.Core.V3.BO.Dinamicos.dClavesComprobante> lstClaves)
+        {
+            List<GESI.ERP.Ventas.V3.BO.dClaveComprobanteDeVenta> lstClavesADevolver = new List<dClaveComprobanteDeVenta>();
+
+            foreach (GESI.ERP.Core.V3.BO.Dinamicos.dClavesComprobante oClave in lstClaves)
+            {
+                GESI.ERP.Ventas.V3.BO.dClaveComprobanteDeVenta oClaveADevolver = new dClaveComprobanteDeVenta();
+                oClaveADevolver.EmpresaID = oClave.EmpresaID;
+                oClaveADevolver.PuntoDeVentaID = oClave.PuntoDeVentaID;
+                oClaveADevolver.ComprobanteID = oClave.ComprobanteID;
+                oClaveADevolver.Serie = oClave.Serie;
+                oClaveADevolver.Numero = oClave.Numero;
+                lstClavesADevolver.Add(oClaveADevolver);
+            }
+
+            return lstClavesADevolver;
         }
 
         #endregion

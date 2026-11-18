@@ -104,7 +104,7 @@ namespace GESI.CORE.API.BLL.V3
             EstadoProductos = estadoProductos;
             ReleePreciosAlImportarComprobantes = releePreciosAlImportarComprobantes;
 
-            if(almacenes != null)
+            if(almacenes != null && almacenes.Length > 0)
                 Almacenes = almacenes
                                 .Split(',')
                                 .Select(int.Parse)
