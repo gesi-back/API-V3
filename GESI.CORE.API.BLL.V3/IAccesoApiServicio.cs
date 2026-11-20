@@ -51,7 +51,7 @@ namespace GESI.CORE.API.BLL.V3
                 return false;
             else
             {
-                cSucursal? oSucursal = oEmpresa.LstSucursales.FirstOrDefault(x => x.SucursalID == sucursalID);
+                cSucursal? oSucursal = oEmpresa.LstSucursales?.FirstOrDefault(x => x.SucursalID == sucursalID);
 
                 if (oSucursal == null)
                     return false;

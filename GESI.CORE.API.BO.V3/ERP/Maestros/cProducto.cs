@@ -25,7 +25,7 @@ namespace GESI.CORE.API.BO.V3.ERP.Maestros
         /// </summary>
         public List<int> ListaDeCategorias { get => _CodigosCategorias; set => _CodigosCategorias = value; }
 
-        private List<int> _CodigosCategorias;
+        private List<int> _CodigosCategorias = new List<int>();
 
         /// <summary>
         /// List ade categorias

@@ -235,7 +235,7 @@ namespace GESI.CORE.API.BO.V3.ERP.Ventas
         /// <summary>
         /// Observaciones del pedido
         /// </summary>
-        public string? Notas { get => _Notas; set => _Notas = value; }
+        public new string? Notas { get => _Notas; set => _Notas = value; }
 
         /// <summary>
         /// Lista de items del comprobante

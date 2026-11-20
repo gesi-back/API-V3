@@ -159,4 +159,62 @@ namespace GESI.CORE.API.BO.V3.ERP.Contabilidad
         /// </summary>
         public string? message { get; set; }
     }
+
+    public class cResponseLibroDiario: cResponse
+    {
+        /// <summary>
+        /// Libro diarios
+        /// </summary>
+        public cLibroDiario? librodiario { get; set; }
+
+        /// <summary>
+        /// Paginacion del resultado
+        /// </summary>
+        public cPaginacion? paginacion { get; set; }
+    }
+
+    public class cResponseMayores :cResponse
+    {
+        /// <summary>
+        /// Mayor de la cuenta
+        /// </summary>
+        public List<cMayorCuenta>? mayores { get; set; }
+
+        /// <summary>
+        /// Paginacion del resultado
+        /// </summary>
+        public cPaginacion? paginacion { get; set; }
+    }
+
+    /// <summary>
+    /// Respuesta con el balance de sumas y saldos
+    /// </summary>
+    public class cResponseBalanceDeSumasYSaldos : cResponse
+    {
+        /// <summary>
+        /// Balance de sumas y saldos
+        /// </summary>
+        public cBalanceDeSumasYSaldos? balanceDeSumasYSaldos { get; set; }
+
+        /// <summary>
+        /// Paginacion del resultado
+        /// </summary>
+        public cPaginacion? paginacion { get; set; }
+    }
+
+    /// <summary>
+    /// Respuesta con el balance general
+    /// </summary>
+    public class cResponseBalanceGeneral : cResponse
+    {
+        /// <summary>
+        /// Balance general
+        /// </summary>
+        public cBalanceGeneral? balanceGeneral { get; set; }
+
+        /// <summary>
+        /// Paginacion del resultado
+        /// </summary>
+        public cPaginacion? paginacion { get; set; }
+    }
 }

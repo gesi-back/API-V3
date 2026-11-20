@@ -9,7 +9,6 @@ using GESI.ERP.Core.V3.BO.Dinamicos;
 using GESI.ERP.Finanzas.V3.BO;
 using GESI.ERP.Ventas.V3.BLL;
 using GESI.ERP.Ventas.V3.BO;
-using Newtonsoft.Json;
 using System.Diagnostics;
 
 namespace GESI.CORE.API.BLL.V3.ERP.Ventas
@@ -727,13 +726,13 @@ namespace GESI.CORE.API.BLL.V3.ERP.Ventas
 
         /// <summary>
         /// Igual que la V2: si algún comprobante trae "Cliente" es el formato de la API vieja (cComprobanteDePedidoAPI) y se convierte;
-        /// si no, es una lista de cMovimientoDeCliente. Se usa Newtonsoft como la V2, que acepta fechas y números en más formatos.
+        /// si no, es una lista de cMovimientoDeCliente. LectorJson acepta los mismos formatos que Newtonsoft en la V2 (fechas, números como texto, etc.).
         /// </summary>
         public List<cMovimientoDeCliente>? LeerComprobantesDePedido(string json)
         {
             try
             {
-                List<cComprobanteDePedidoAPI>? lstComprobantesPedidosAPIVieja = JsonConvert.DeserializeObject<List<cComprobanteDePedidoAPI>>(json);
+                List<cComprobanteDePedidoAPI>? lstComprobantesPedidosAPIVieja = LectorJson.Leer<List<cComprobanteDePedidoAPI>>(json);
 
                 if (lstComprobantesPedidosAPIVieja == null)
                     return null;
@@ -741,11 +740,11 @@ namespace GESI.CORE.API.BLL.V3.ERP.Ventas
                 bool todosSonNulos = lstComprobantesPedidosAPIVieja.All(c => c.Cliente == null);   // SI TODOS LOS OBJETOS CLIENTE SON NULL, ES EL FORMATO NUEVO
 
                 if (todosSonNulos)
-                    return JsonConvert.DeserializeObject<List<cMovimientoDeCliente>>(json);
+                    return LectorJson.Leer<List<cMovimientoDeCliente>>(json);
 
                 return ConvertirComprobantePedidoAPIViejaAComprobanteDeVenta(lstComprobantesPedidosAPIVieja);
             }
-            catch (JsonException ex)
+            catch (System.Text.Json.JsonException ex)
             {
                 // NUEVO respecto de la V2: un body que no se puede leer devuelve 400 (la V2 devolvía 500)
                 throw new cFormatoInvalidoException("El formato de los comprobantes es invalido: " + ex.Message);
@@ -760,7 +759,7 @@ namespace GESI.CORE.API.BLL.V3.ERP.Ventas
         {
             try
             {
-                List<cComprobanteCobroAPI>? lstComprobantesCobroAPIVieja = JsonConvert.DeserializeObject<List<cComprobanteCobroAPI>>(json);
+                List<cComprobanteCobroAPI>? lstComprobantesCobroAPIVieja = LectorJson.Leer<List<cComprobanteCobroAPI>>(json);
 
                 if (lstComprobantesCobroAPIVieja == null)
                     return null;
@@ -768,11 +767,11 @@ namespace GESI.CORE.API.BLL.V3.ERP.Ventas
                 bool todosSonNulos = lstComprobantesCobroAPIVieja.All(c => c.Cliente == null);   // SI TODOS LOS OBJETOS CLIENTE SON NULL, ES EL FORMATO NUEVO
 
                 if (todosSonNulos)
-                    return JsonConvert.DeserializeObject<List<cComprobanteCobro>>(json);
+                    return LectorJson.Leer<List<cComprobanteCobro>>(json);
 
                 return ConvertirComprobanteCobroAPIViejaAComprobanteDeCobro(lstComprobantesCobroAPIVieja);
             }
-            catch (JsonException ex)
+            catch (System.Text.Json.JsonException ex)
             {
                 // NUEVO respecto de la V2: un body que no se puede leer devuelve 400 (la V2 devolvía 500)
                 throw new cFormatoInvalidoException("El formato de los cobros es invalido: " + ex.Message);

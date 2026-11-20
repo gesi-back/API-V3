@@ -91,6 +91,7 @@ namespace GESI.CORE.API.BLL.V3
             services.AddScoped<IMovimientosDeStockServicio, MovimientosDeStockServicio>();
             services.AddScoped<IAlmacenesDestinoTransferenciaServicio, AlmacenesDestinoTransferenciaServicio>();
             services.AddScoped<IConfiguracionesServicio, ConfiguracionesServicio>();
+            services.AddScoped<IReportesContables, ReportesContables>();
             
 
 

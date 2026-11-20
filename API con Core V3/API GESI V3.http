@@ -1,6 +1,0 @@
-@API_con_Core_V3_HostAddress = http://localhost:5015
-
-GET {{API_con_Core_V3_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###

@@ -1,6 +1,8 @@
 <Solution>
-  <Project Path="API con Core V3/API GESI V3.csproj" />
+  <Folder Name="/Ejecutables y Pruebas/">
+    <Project Path="GESI.CORE.API.Tests.V3/GESI.CORE.API.Tests.V3.csproj" />
+  </Folder>
+  <Project Path="GESI.CORE.API.Web.V3/GESI.CORE.API.Web.V3.csproj" />
   <Project Path="GESI.CORE.API.BLL.V3/GESI.CORE.API.BLL.V3.csproj" Id="ca100003-a5b0-43a2-be60-9259c8a7703d" />
   <Project Path="GESI.CORE.API.BO.V3/GESI.CORE.API.BO.V3.csproj" Id="08e6a92a-41ca-4508-bd9a-842857e35298" />
-  <Project Path="API GESI V3.Pruebas/API GESI V3.Pruebas.csproj" />
 </Solution>

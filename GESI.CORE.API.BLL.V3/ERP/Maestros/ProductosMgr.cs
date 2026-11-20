@@ -627,11 +627,12 @@ namespace GESI.CORE.API.BLL.V3.ERP.Maestros
 
                 throw new cFormatoInvalidoException("Conversion incorrecta de fecha");
             }
-            catch (Exception)
+            catch (Exception ex)
             {
                 stopwatch.Stop();
 
-                apiLogger.LoguearSucesosAPI("Not Found Productos GetList", tTiposDeError.tError, sesion.Usuario,
+                // Igual que GetSearchResults: el error queda en el log con el paso en el que falló
+                apiLogger.LoguearSucesosAPI(ex.Message + " Haciendo: " + strQueEstabaHaciendo, tTiposDeError.tError, sesion.Usuario,
                                                 Endpoint.Maestros.Productos("GetList"), sesion.EmpresaID, sesion.SucursalID,
                                                 cantidadDeElementos: lstCodigosProducto?.Count ?? 0,
                                                 numeroPagina: pageNumber,

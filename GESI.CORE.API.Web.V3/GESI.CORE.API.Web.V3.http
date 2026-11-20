@@ -1,0 +1,6 @@
+@GESI_CORE_API_Web_V3_HostAddress = http://localhost:5015
+
+GET {{GESI_CORE_API_Web_V3_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
